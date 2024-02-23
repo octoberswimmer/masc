@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"sync/atomic"
+	"syscall/js"
 
 	"github.com/muesli/termenv"
 )
@@ -166,6 +167,12 @@ func WithMouseAllMotion() ProgramOption {
 func WithoutRenderer() ProgramOption {
 	return func(p *Program) {
 		p.renderer = &nilRenderer{}
+	}
+}
+
+func RenderTo(rootNode js.Value) ProgramOption {
+	return func(p *Program) {
+		p.renderer = newNodeRenderer(rootNode)
 	}
 }
 

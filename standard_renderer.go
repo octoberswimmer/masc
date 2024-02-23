@@ -3,12 +3,12 @@ package tea
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"strings"
 	"sync"
+	"syscall/js"
 	"time"
 
-	"github.com/muesli/ansi/compressor"
+	"github.com/hexops/vecty"
 	"github.com/muesli/reflow/truncate"
 	"github.com/muesli/termenv"
 )
@@ -26,6 +26,9 @@ const (
 // In cases where very high performance is needed the renderer can be told
 // to exclude ranges of lines, allowing them to be written to directly.
 type standardRenderer struct {
+	rootNode js.Value
+	rendered bool
+
 	mtx *sync.Mutex
 	out *termenv.Output
 
@@ -58,23 +61,13 @@ type standardRenderer struct {
 
 // newRenderer creates a new renderer. Normally you'll want to initialize it
 // with os.Stdout as the first argument.
-func newRenderer(out *termenv.Output, useANSICompressor bool, fps int) renderer {
-	if fps < 1 {
-		fps = defaultFPS
-	} else if fps > maxFPS {
-		fps = maxFPS
-	}
-	r := &standardRenderer{
-		out:                out,
-		mtx:                &sync.Mutex{},
-		done:               make(chan struct{}),
-		framerate:          time.Second / time.Duration(fps),
-		useANSICompressor:  useANSICompressor,
-		queuedMessageLines: []string{},
-	}
-	if r.useANSICompressor {
-		r.out = termenv.NewOutput(&compressor.Writer{Forward: out})
-	}
+func newRenderer() renderer {
+	r := &standardRenderer{}
+	return r
+}
+
+func newNodeRenderer(node js.VAlue) renderer {
+	r := &standardRenderer{rootNode: node}
 	return r
 }
 
@@ -91,6 +84,7 @@ func (r *standardRenderer) start() {
 	// Since the renderer can be restarted after a stop, we need to reset
 	// the done channel and its corresponding sync.Once.
 	r.once = sync.Once{}
+	r.rendered = false
 
 	go r.listen()
 }
@@ -107,14 +101,6 @@ func (r *standardRenderer) stop() {
 
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
-
-	r.out.ClearLine()
-
-	if r.useANSICompressor {
-		if w, ok := r.out.TTY().(io.WriteCloser); ok {
-			_ = w.Close()
-		}
-	}
 }
 
 // kill halts the renderer. The final frame will not be rendered.
@@ -270,22 +256,18 @@ func (r *standardRenderer) flush() {
 	r.buf.Reset()
 }
 
-// write writes to the internal buffer. The buffer will be outputted via the
-// ticker which calls flush().
-func (r *standardRenderer) write(s string) {
+func (r *standardRenderer) render(c vecty.Component, send func(Msg)) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
-	r.buf.Reset()
-
-	// If an empty string was passed we should clear existing output and
-	// rendering nothing. Rather than introduce additional state to manage
-	// this, we render a single space as a simple (albeit less correct)
-	// solution.
-	if s == "" {
-		s = " "
+	if r.rendered {
+		vecty.Rerender(c)
 	}
-
-	_, _ = r.buf.WriteString(s)
+	r.rendered = true
+	if r.rootNode != nil {
+		vecty.RenderIntoNode(r.rootNode, c, send)
+	} else {
+		vecty.RenderBody(c, send)
+	}
 }
 
 func (r *standardRenderer) repaint() {

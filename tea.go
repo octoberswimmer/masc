@@ -22,21 +22,20 @@ import (
 	"syscall"
 
 	"github.com/containerd/console"
+	"github.com/hexops/vecty"
 	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/cancelreader"
 	"github.com/muesli/termenv"
+	. "github.com/octoberswimmer/rumtew/msg"
 	"golang.org/x/sync/errgroup"
 )
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
 var ErrProgramKilled = errors.New("program was killed")
 
-// Msg contain data from the result of a IO operation. Msgs trigger the update
-// function and, henceforth, the UI.
-type Msg interface{}
-
 // Model contains the program's state as well as its core functions.
 type Model interface {
+	vecty.Component
 	// Init is the first function that will be called. It returns an optional
 	// initial command. To not perform an initial command return nil.
 	Init() Cmd
@@ -416,9 +415,9 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			}
 
 			var cmd Cmd
-			model, cmd = model.Update(msg) // run update
-			cmds <- cmd                    // process command (if any)
-			p.renderer.write(model.View()) // send view to renderer
+			model, cmd = model.Update(msg)   // run update
+			cmds <- cmd                      // process command (if any)
+			p.renderer.render(model, p.Send) // send view to renderer
 		}
 	}
 }
@@ -433,44 +432,6 @@ func (p *Program) Run() (Model, error) {
 	p.finished = make(chan struct{}, 1)
 
 	defer p.cancel()
-
-	switch p.inputType {
-	case defaultInput:
-		p.input = os.Stdin
-
-		// The user has not set a custom input, so we need to check whether or
-		// not standard input is a terminal. If it's not, we open a new TTY for
-		// input. This will allow things to "just work" in cases where data was
-		// piped in or redirected to the application.
-		//
-		// To disable input entirely pass nil to the [WithInput] program option.
-		f, isFile := p.input.(*os.File)
-		if !isFile {
-			break
-		}
-		if isatty.IsTerminal(f.Fd()) {
-			break
-		}
-
-		f, err := openInputTTY()
-		if err != nil {
-			return p.initialModel, err
-		}
-		defer f.Close() //nolint:errcheck
-		p.input = f
-
-	case ttyInput:
-		// Open a new TTY, by request
-		f, err := openInputTTY()
-		if err != nil {
-			return p.initialModel, err
-		}
-		defer f.Close() //nolint:errcheck
-		p.input = f
-
-	case customInput:
-		// (There is nothing extra to do.)
-	}
 
 	// Handle signals.
 	if !p.startupOptions.has(withoutSignalHandler) {
@@ -491,7 +452,7 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		p.renderer = newRenderer(p.output, p.startupOptions.has(withANSICompressor), p.fps)
+		p.renderer = newRenderer()
 	}
 
 	// Check if output is a TTY before entering raw mode, hiding the cursor and
@@ -535,7 +496,7 @@ func (p *Program) Run() (Model, error) {
 	p.renderer.start()
 
 	// Render the initial view.
-	p.renderer.write(model.View())
+	p.renderer.render(model)
 
 	// Subscribe to user input.
 	if p.input != nil {
@@ -557,7 +518,7 @@ func (p *Program) Run() (Model, error) {
 		err = ErrProgramKilled
 	} else {
 		// Ensure we rendered the final state of the model.
-		p.renderer.write(model.View())
+		p.renderer.render(model)
 	}
 
 	// Tear down.
