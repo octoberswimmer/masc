@@ -1,8 +1,13 @@
+//go:build !js
 // +build !js
 
 package vecty
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/octoberswimmer/rumtew/msg"
+)
 
 // Stubs for building Vecty under a native GOOS and GOARCH, so that Vecty
 // type-checks, lints, auto-completes, and serves documentation under godoc.org
@@ -34,8 +39,8 @@ func (h *HTML) Node() SyscallJSValue {
 //
 // If the Component's Render method does not return an element of the same type,
 // an error of type ElementMismatchError is returned.
-func RenderIntoNode(node SyscallJSValue, c Component) error {
-	return renderIntoNode("RenderIntoNode", node, c)
+func RenderIntoNode(node SyscallJSValue, c Component, send func(msg.Msg)) error {
+	return renderIntoNode("RenderIntoNode", node, c, send)
 }
 
 func toLower(s string) string {
