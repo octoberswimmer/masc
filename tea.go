@@ -21,10 +21,7 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/containerd/console"
-	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/cancelreader"
-	"github.com/muesli/termenv"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -45,10 +42,6 @@ type Model interface {
 	// Update is called when a message is received. Use it to inspect messages
 	// and, in response, update the model and/or send a command.
 	Update(Msg) (Model, Cmd)
-
-	// View renders the program's UI, which is just a string. The view is
-	// rendered after every Update.
-	View() string
 }
 
 // Cmd is an IO operation that returns a message when it's complete. If it's
@@ -143,7 +136,6 @@ type Program struct {
 	finished chan struct{}
 
 	// where to send output, this will usually be os.Stdout.
-	output        *termenv.Output
 	restoreOutput func() error
 	renderer      renderer
 
@@ -151,7 +143,6 @@ type Program struct {
 	input        io.Reader
 	cancelReader cancelreader.CancelReader
 	readLoopDone chan struct{}
-	console      console.Console
 
 	// was the altscreen active before releasing the terminal?
 	altScreenWasActive bool
@@ -204,16 +195,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	// Initialize context and teardown channel.
 	p.ctx, p.cancel = context.WithCancel(p.ctx)
 
-	// if no output was set, set it to stdout
-	if p.output == nil {
-		p.output = termenv.DefaultOutput()
-
-		// cache detected color values
-		termenv.WithColorCache(true)(p.output)
-	}
-
-	p.restoreOutput, _ = termenv.EnableVirtualTerminalProcessing(p.output)
-
 	return p
 }
 
@@ -256,16 +237,6 @@ func (p *Program) handleSignals() chan struct{} {
 // handleResize handles terminal resize events.
 func (p *Program) handleResize() chan struct{} {
 	ch := make(chan struct{})
-
-	if f, ok := p.output.TTY().(*os.File); ok && isatty.IsTerminal(f.Fd()) {
-		// Get the initial terminal size and send it to the program.
-		go p.checkResize()
-
-		// Listen for window resizes.
-		go p.listenForResize(ch)
-	} else {
-		close(ch)
-	}
 
 	return ch
 }
