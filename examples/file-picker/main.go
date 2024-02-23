@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/filepicker"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/octoberswimmer/rumtew"
 )
 
 type model struct {

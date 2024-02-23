@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/octoberswimmer/rumtew"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/mattn/go-isatty"
 	"github.com/muesli/reflow/indent"

@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/octoberswimmer/rumtew"
 	"github.com/charmbracelet/lipgloss"
 )
 

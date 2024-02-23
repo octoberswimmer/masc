@@ -2,7 +2,7 @@ module tutorial
 
 go 1.18
 
-require github.com/charmbracelet/bubbletea v0.25.0
+require github.com/octoberswimmer/rumtew v0.25.0
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
@@ -22,4 +22,4 @@ require (
 	golang.org/x/text v0.13.0 // indirect
 )
 
-replace github.com/charmbracelet/bubbletea => ../
+replace github.com/octoberswimmer/rumtew => ../

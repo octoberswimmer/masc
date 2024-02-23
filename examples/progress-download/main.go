@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/charmbracelet/bubbles/progress"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/octoberswimmer/rumtew"
 )
 
 var p *tea.Program

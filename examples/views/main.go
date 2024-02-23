@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "github.com/octoberswimmer/rumtew"
 	"github.com/fogleman/ease"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/muesli/reflow/indent"
