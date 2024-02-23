@@ -2,8 +2,6 @@ package rumtew
 
 import (
 	"reflect"
-
-	"github.com/octoberswimmer/rumtew/msg"
 )
 
 // batch renderer singleton
@@ -44,7 +42,7 @@ type Component interface {
 	// If Render returns nil, the component will render as nothing (in reality,
 	// a noscript tag, which has no display or action, and is compatible with
 	// Vecty's diffing algorithm).
-	Render(send func(msg.Msg)) ComponentOrHTML
+	Render(send func(Msg)) ComponentOrHTML
 
 	// Context returns the components context, which is used internally by
 	// Vecty in order to store the previous component render for diffing.
@@ -851,7 +849,7 @@ func (b *batchRenderer) add(c Component) {
 
 // render the pending batch.
 // TODO(pdf): Add tests for time budget and multi-pass renders.
-func (b *batchRenderer) render(startTime float64, send func(msg.Msg)) {
+func (b *batchRenderer) render(startTime float64, send func(Msg)) {
 	// If the batch is empty, mark as unscheduled, and stop render cycle.
 	if len(b.batch) == 0 {
 		b.scheduled = false
@@ -989,7 +987,7 @@ func copyProps(src, dst Component) {
 // 4. nextChild == Component && prevChild == Component
 // 5. nextChild == Component && prevChild == *HTML
 // 6. nextChild == Component && prevChild == nil
-func render(next, prev ComponentOrHTML, send func(msg.Msg)) (nextHTML *HTML, skip bool, pendingMounts []Mounter) {
+func render(next, prev ComponentOrHTML, send func(Msg)) (nextHTML *HTML, skip bool, pendingMounts []Mounter) {
 	switch v := next.(type) {
 	case *HTML:
 		// Cases 1, 2 and 3 above. Reconcile against the prevRender.
@@ -1008,7 +1006,7 @@ func render(next, prev ComponentOrHTML, send func(msg.Msg)) (nextHTML *HTML, ski
 // renderComponent handles rendering the given Component into *HTML. If skip ==
 // true is returned, the Component's SkipRender method has signaled the
 // component does not need to be rendered and h == nil is returned.
-func renderComponent(next Component, prev ComponentOrHTML, send func(msg.Msg)) (nextHTML *HTML, skip bool, pendingMounts []Mounter) {
+func renderComponent(next Component, prev ComponentOrHTML, send func(Msg)) (nextHTML *HTML, skip bool, pendingMounts []Mounter) {
 	// If we had a component last render, and it's of compatible type, operate
 	// on the previous instance.
 	if prevComponent, ok := prev.(Component); ok && sameType(next, prevComponent) {
@@ -1158,7 +1156,7 @@ func unmount(e ComponentOrHTML) {
 }
 
 // requestAnimationFrame calls the native JS function of the same name.
-func requestAnimationFrame(callback func(float64, func(msg.Msg)), send func(msg.Msg)) int {
+func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) int {
 	var cb jsFunc
 	cb = funcOf(func(this jsObject, args []jsObject) interface{} {
 		cb.Release()
@@ -1183,7 +1181,7 @@ func requestAnimationFrame(callback func(float64, func(msg.Msg)), send func(msg.
 //		panic(err)
 //	}
 //	select{} // run Go forever
-func RenderBody(body Component, send func(msg.Msg)) {
+func RenderBody(body Component, send func(Msg)) {
 	target := global().Get("document").Call("querySelector", "body")
 	err := renderIntoNode("RenderBody", target, body, send)
 	if err != nil {
@@ -1222,12 +1220,12 @@ func (e InvalidTargetError) Error() string {
 //
 // If the Component's Render method does not return an element of the same type,
 // an error of type ElementMismatchError is returned.
-func RenderInto(selector string, c Component, send func(msg.Msg)) error {
+func RenderInto(selector string, c Component, send func(Msg)) error {
 	target := global().Get("document").Call("querySelector", selector)
 	return renderIntoNode("RenderInto", target, c, send)
 }
 
-func renderIntoNode(methodName string, node jsObject, c Component, send func(msg.Msg)) error {
+func renderIntoNode(methodName string, node jsObject, c Component, send func(Msg)) error {
 	if !node.Truthy() {
 		return InvalidTargetError{method: methodName}
 	}

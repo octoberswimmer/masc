@@ -5,8 +5,6 @@ package rumtew
 
 import (
 	"strings"
-
-	"github.com/octoberswimmer/rumtew/msg"
 )
 
 // Stubs for building Vecty under a native GOOS and GOARCH, so that Vecty
@@ -39,7 +37,7 @@ func (h *HTML) Node() SyscallJSValue {
 //
 // If the Component's Render method does not return an element of the same type,
 // an error of type ElementMismatchError is returned.
-func RenderIntoNode(node SyscallJSValue, c Component, send func(msg.Msg)) error {
+func RenderIntoNode(node SyscallJSValue, c Component, send func(Msg)) error {
 	return renderIntoNode("RenderIntoNode", node, c, send)
 }
 

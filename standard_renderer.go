@@ -8,7 +8,6 @@ import (
 	"syscall/js"
 	"time"
 
-	"github.com/hexops/vecty"
 	"github.com/muesli/reflow/truncate"
 	"github.com/muesli/termenv"
 )
@@ -256,17 +255,17 @@ func (r *standardRenderer) flush() {
 	r.buf.Reset()
 }
 
-func (r *standardRenderer) render(c vecty.Component, send func(Msg)) {
+func (r *standardRenderer) render(c Component, send func(Msg)) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	if r.rendered {
-		vecty.Rerender(c)
+		Rerender(c)
 	}
 	r.rendered = true
 	if r.rootNode != nil {
-		vecty.RenderIntoNode(r.rootNode, c, send)
+		RenderIntoNode(r.rootNode, c, send)
 	} else {
-		vecty.RenderBody(c, send)
+		RenderBody(c, send)
 	}
 }
 
