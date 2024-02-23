@@ -1,7 +1,7 @@
 //go:build windows
 // +build windows
 
-package tea
+package rumtew
 
 import (
 	"os"

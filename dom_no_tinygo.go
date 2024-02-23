@@ -1,6 +1,6 @@
 // +build !tinygo
 
-package vecty
+package rumtew
 
 func init() {
 	if isTest {

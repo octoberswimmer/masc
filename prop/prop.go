@@ -1,6 +1,8 @@
 package prop
 
-import "github.com/hexops/vecty"
+import (
+	vecty "github.com/octoberswimmer/rumtew"
+)
 
 type InputType string
 

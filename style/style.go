@@ -3,7 +3,7 @@ package style
 import (
 	"strconv"
 
-	"github.com/hexops/vecty"
+	vecty "github.com/octoberswimmer/rumtew"
 )
 
 type Size string

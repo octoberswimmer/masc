@@ -1,4 +1,4 @@
-package vecty
+package rumtew
 
 import "testing"
 

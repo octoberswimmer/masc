@@ -1,4 +1,4 @@
-package tea
+package rumtew
 
 // WindowSizeMsg is used to report the terminal size. It's sent to Update once
 // initially and then on every terminal resize. Note that Windows does not

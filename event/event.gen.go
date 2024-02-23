@@ -7,7 +7,9 @@
 // CC-BY-SA 2.5.
 package event
 
-import "github.com/hexops/vecty"
+import (
+	vecty "github.com/octoberswimmer/rumtew"
+)
 
 // Abort is an event fired when a transaction has been aborted.
 //

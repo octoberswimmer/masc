@@ -1,6 +1,6 @@
 // +build !go1.14
 
-package vecty
+package rumtew
 
 // Typechecking will pass except one error:
 //

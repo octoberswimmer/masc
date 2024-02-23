@@ -1,4 +1,4 @@
-package vecty
+package rumtew
 
 func replaceNode(newNode, oldNode jsObject) {
 	if newNode.Equal(oldNode) {

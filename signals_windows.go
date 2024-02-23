@@ -1,7 +1,7 @@
 //go:build windows
 // +build windows
 
-package tea
+package rumtew
 
 // listenForResize is not available on windows because windows does not
 // implement syscall.SIGWINCH.

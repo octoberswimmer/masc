@@ -7,7 +7,7 @@
 // A tutorial is available at https://github.com/octoberswimmer/rumtew/tree/master/tutorials
 //
 // Example programs can be found at https://github.com/octoberswimmer/rumtew/tree/master/examples
-package tea
+package rumtew
 
 import (
 	"context"
@@ -22,20 +22,22 @@ import (
 	"syscall"
 
 	"github.com/containerd/console"
-	"github.com/hexops/vecty"
 	isatty "github.com/mattn/go-isatty"
 	"github.com/muesli/cancelreader"
 	"github.com/muesli/termenv"
-	. "github.com/octoberswimmer/rumtew/msg"
 	"golang.org/x/sync/errgroup"
 )
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
 var ErrProgramKilled = errors.New("program was killed")
 
+// Msg contain data from the result of a IO operation. Msgs trigger the update
+// function and, henceforth, the UI.
+type Msg interface{}
+
 // Model contains the program's state as well as its core functions.
 type Model interface {
-	vecty.Component
+	Component
 	// Init is the first function that will be called. It returns an optional
 	// initial command. To not perform an initial command return nil.
 	Init() Cmd

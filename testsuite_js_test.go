@@ -1,6 +1,6 @@
 // +build js
 
-package vecty
+package rumtew
 
 import "syscall/js"
 

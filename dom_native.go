@@ -1,7 +1,7 @@
 //go:build !js
 // +build !js
 
-package vecty
+package rumtew
 
 import (
 	"strings"

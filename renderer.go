@@ -1,6 +1,4 @@
-package tea
-
-import "github.com/hexops/vecty"
+package rumtew
 
 // renderer is the interface for Bubble Tea renderers.
 type renderer interface {
@@ -15,7 +13,7 @@ type renderer interface {
 
 	// Write a frame to the renderer. The renderer can write this data to
 	// output at its discretion.
-	render(vecty.Component, func(Msg))
+	render(Component, func(Msg))
 
 	// Request a full re-render. Note that this will not trigger a render
 	// immediately. Rather, this method causes the next render to be a full
