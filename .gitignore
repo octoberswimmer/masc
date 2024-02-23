@@ -1,4 +1,5 @@
 .DS_Store
+.DS_store
 .envrc
 
 examples/fullscreen/fullscreen
@@ -20,3 +21,4 @@ tutorials/basics/basics
 tutorials/commands/commands
 .idea
 coverage.txt
+testdata/*.got.txt
