@@ -1,3 +1,4 @@
+//go:build js
 // +build js
 
 package rumtew
@@ -26,8 +27,8 @@ func (h *HTML) Node() js.Value {
 //
 // If the Component's Render method does not return an element of the same type,
 // an error of type ElementMismatchError is returned.
-func RenderIntoNode(node js.Value, c Component) error {
-	return renderIntoNode("RenderIntoNode", wrapObject(node), c)
+func RenderIntoNode(node js.Value, c Component, send func(Msg)) error {
+	return renderIntoNode("RenderIntoNode", wrapObject(node), c, send)
 }
 
 func toLower(s string) string {

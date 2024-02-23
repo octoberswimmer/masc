@@ -64,7 +64,7 @@ func newRenderer() renderer {
 	return r
 }
 
-func newNodeRenderer(node js.VAlue) renderer {
+func newNodeRenderer(node js.Value) renderer {
 	r := &standardRenderer{rootNode: node}
 	return r
 }
@@ -132,14 +132,18 @@ func (r *standardRenderer) flush() {
 	defer r.mtx.Unlock()
 }
 
+func isZeroValue(v js.Value) bool {
+	return !v.Truthy()
+}
+
 func (r *standardRenderer) render(c Component, send func(Msg)) {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 	if r.rendered {
-		Rerender(c)
+		Rerender(c, send)
 	}
 	r.rendered = true
-	if r.rootNode != nil {
+	if !isZeroValue(r.rootNode) {
 		RenderIntoNode(r.rootNode, c, send)
 	} else {
 		RenderBody(c, send)

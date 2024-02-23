@@ -195,8 +195,3 @@ func (p *Program) EnableMouseAllMotion() {
 func (p *Program) DisableMouseAllMotion() {
 	p.renderer.disableMouseAllMotion()
 }
-
-// SetWindowTitle sets the terminal window title.
-func (p *Program) SetWindowTitle(title string) {
-	p.output.SetWindowTitle(title)
-}

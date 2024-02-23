@@ -36,12 +36,12 @@ func (l *EventListener) Apply(h *HTML) {
 
 // MarkupOrChild represents one of:
 //
-//  Component
-//  *HTML
-//  List
-//  KeyedList
-//  nil
-//  MarkupList
+//	Component
+//	*HTML
+//	List
+//	KeyedList
+//	nil
+//	MarkupList
 //
 // An unexported method on this interface ensures at compile time that the
 // underlying value must be one of these types.
@@ -88,7 +88,7 @@ func Style(key, value string) Applyer {
 // Key returns an Applyer that uniquely identifies the HTML element amongst its
 // siblings. When used, all other sibling elements and components must also be
 // keyed.
-func Key(key interface{}) Applyer {
+func ElementKey(key interface{}) Applyer {
 	return markupFunc(func(h *HTML) {
 		h.key = key
 	})

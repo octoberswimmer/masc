@@ -379,7 +379,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 				}()
 
 			case setWindowTitleMsg:
-				p.SetWindowTitle(string(msg))
+				SetTitle(string(msg))
 			}
 
 			// Process internal messages for the renderer.
@@ -428,12 +428,6 @@ func (p *Program) Run() (Model, error) {
 		p.renderer = newRenderer()
 	}
 
-	// Check if output is a TTY before entering raw mode, hiding the cursor and
-	// so on.
-	if err := p.initTerminal(); err != nil {
-		return p.initialModel, err
-	}
-
 	// Honor program startup options.
 	if p.startupOptions&withAltScreen != 0 {
 		p.renderer.enterAltScreen()
@@ -469,7 +463,7 @@ func (p *Program) Run() (Model, error) {
 	p.renderer.start()
 
 	// Render the initial view.
-	p.renderer.render(model)
+	p.renderer.render(model, p.Send)
 
 	// Subscribe to user input.
 	if p.input != nil {
@@ -491,7 +485,7 @@ func (p *Program) Run() (Model, error) {
 		err = ErrProgramKilled
 	} else {
 		// Ensure we rendered the final state of the model.
-		p.renderer.render(model)
+		p.renderer.render(model, p.Send)
 	}
 
 	// Tear down.
@@ -582,10 +576,6 @@ func (p *Program) shutdown(kill bool) {
 		}
 	}
 
-	_ = p.restoreTerminalState()
-	if p.restoreOutput != nil {
-		_ = p.restoreOutput()
-	}
 	p.finished <- struct{}{}
 }
 
@@ -602,7 +592,7 @@ func (p *Program) ReleaseTerminal() error {
 
 	p.altScreenWasActive = p.renderer.altScreen()
 	p.bpWasActive = p.renderer.bracketedPasteActive()
-	return p.restoreTerminalState()
+	return nil
 }
 
 // RestoreTerminal reinitializes the Program's input reader, restores the
@@ -611,9 +601,6 @@ func (p *Program) ReleaseTerminal() error {
 func (p *Program) RestoreTerminal() error {
 	atomic.StoreUint32(&p.ignoreSignals, 0)
 
-	if err := p.initTerminal(); err != nil {
-		return err
-	}
 	if err := p.initCancelReader(); err != nil {
 		return err
 	}

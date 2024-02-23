@@ -193,7 +193,7 @@ func (h *HTML) reconcileText(prev *HTML) {
 	}
 }
 
-func (h *HTML) reconcile(prev *HTML) []Mounter {
+func (h *HTML) reconcile(prev *HTML, send func(Msg)) []Mounter {
 	// Check for compatible tag and mutate previous instance on match, otherwise start fresh
 	switch {
 	case prev != nil && h.tag == "" && prev.tag == "":
@@ -218,7 +218,7 @@ func (h *HTML) reconcile(prev *HTML) []Mounter {
 		h.reconcileProperties(prev)
 	}
 
-	return h.reconcileChildren(prev)
+	return h.reconcileChildren(prev, send)
 }
 
 // reconcileProperties updates properties/attributes/etc to match the current
@@ -358,7 +358,7 @@ func (h *HTML) removeProperties(prev *HTML) {
 
 // reconcileChildren reconciles children of the current HTML against a previous
 // render's DOM nodes.
-func (h *HTML) reconcileChildren(prev *HTML) (pendingMounts []Mounter) {
+func (h *HTML) reconcileChildren(prev *HTML, send func(Msg)) (pendingMounts []Mounter) {
 	hasKeyedChildren := len(h.keyedChildren) > 0
 	prevHadKeyedChildren := len(prev.keyedChildren) > 0
 	for i, nextChild := range h.children {
@@ -414,10 +414,10 @@ func (h *HTML) reconcileChildren(prev *HTML) (pendingMounts []Mounter) {
 		// can not be determined by children index, so skip if keyed.
 		if (i >= len(prev.children) && !hasKeyedChildren) || new {
 			if nextChildList, ok := nextChild.(KeyedList); ok {
-				pendingMounts = append(pendingMounts, nextChildList.reconcile(h, nil)...)
+				pendingMounts = append(pendingMounts, nextChildList.reconcile(h, nil, send)...)
 				continue
 			}
-			nextChildRender, skip, mounters := render(nextChild, nil)
+			nextChildRender, skip, mounters := render(nextChild, nil, send)
 			if skip || nextChildRender == nil {
 				continue
 			}
@@ -476,7 +476,7 @@ func (h *HTML) reconcileChildren(prev *HTML) (pendingMounts []Mounter) {
 		// If the next child is a list, reconcile its elements in-place, and
 		// we're done.
 		if nextChildList, ok := nextChild.(KeyedList); ok {
-			pendingMounts = append(pendingMounts, nextChildList.reconcile(h, prevChild)...)
+			pendingMounts = append(pendingMounts, nextChildList.reconcile(h, prevChild, send)...)
 			continue
 		}
 
@@ -504,7 +504,7 @@ func (h *HTML) reconcileChildren(prev *HTML) (pendingMounts []Mounter) {
 		}
 
 		// Determine the next child render.
-		nextChildRender, skip, mounters := render(nextChild, prevChild)
+		nextChildRender, skip, mounters := render(nextChild, prevChild, send)
 		if nextChildRender != nil && prevChildRender != nil && nextChildRender == prevChildRender {
 			panic("vecty: next child render must not equal previous child render (did the child Render illegally return a stored render variable?)")
 		}
@@ -708,7 +708,7 @@ func (l KeyedList) Key() interface{} {
 // reconcile reconciles the keyedList against the DOM node in a separate
 // context, unless keyed. Uses the currently known insertion point from the
 // parent to insert children at the correct position.
-func (l KeyedList) reconcile(parent *HTML, prevChild ComponentOrHTML) (pendingMounts []Mounter) {
+func (l KeyedList) reconcile(parent *HTML, prevChild ComponentOrHTML, send func(Msg)) (pendingMounts []Mounter) {
 	// Effectively become the parent (copy its scope) so that we can reconcile
 	// our children against the prev child.
 	l.html.node = parent.node
@@ -717,12 +717,12 @@ func (l KeyedList) reconcile(parent *HTML, prevChild ComponentOrHTML) (pendingMo
 
 	switch v := prevChild.(type) {
 	case KeyedList:
-		pendingMounts = l.html.reconcileChildren(v.html)
+		pendingMounts = l.html.reconcileChildren(v.html, send)
 	case *HTML, Component, nil:
 		if v == nil {
 			// No previous element, so reconcile against a parent with no
 			// children so all of our elements are added.
-			pendingMounts = l.html.reconcileChildren(&HTML{node: parent.node})
+			pendingMounts = l.html.reconcileChildren(&HTML{node: parent.node}, send)
 		} else {
 			// Build a previous render containing just the prevChild to be
 			// replaced by this list
@@ -730,7 +730,7 @@ func (l KeyedList) reconcile(parent *HTML, prevChild ComponentOrHTML) (pendingMo
 			if keyer, ok := prevChild.(Keyer); ok && keyer.Key() != nil {
 				prev.keyedChildren = map[interface{}]ComponentOrHTML{keyer.Key(): prevChild}
 			}
-			pendingMounts = l.html.reconcileChildren(prev)
+			pendingMounts = l.html.reconcileChildren(prev, send)
 		}
 	default:
 		panic("vecty: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(v).String() + ")")
@@ -800,7 +800,7 @@ func Text(text string, m ...MarkupOrChild) *HTML {
 // there is no guarantee that a calls to Rerender will map 1:1 with calls to
 // the Component's Render method. For example, two calls to Rerender may
 // result in only one call to the Component's Render method.
-func Rerender(c Component) {
+func Rerender(c Component, send func(Msg)) {
 	if c == nil {
 		panic("vecty: Rerender illegally called with a nil Component argument")
 	}
@@ -810,7 +810,7 @@ func Rerender(c Component) {
 	if c.Context().unmounted {
 		return
 	}
-	batch.add(c)
+	batch.add(c, send)
 }
 
 // batchRenderer handles component re-renders by queueing and deduplicating
@@ -825,7 +825,7 @@ type batchRenderer struct {
 }
 
 // add a Component to the pending batch.
-func (b *batchRenderer) add(c Component) {
+func (b *batchRenderer) add(c Component, send func(Msg)) {
 	if i, ok := b.idx[c]; ok {
 		// Shift idx for delete.
 		for j, c := range b.batch[i+1:] {
@@ -843,7 +843,7 @@ func (b *batchRenderer) add(c Component) {
 	// the next frame.
 	if !b.scheduled {
 		b.scheduled = true
-		requestAnimationFrame(b.render)
+		requestAnimationFrame(b.render, send)
 	}
 }
 
@@ -991,7 +991,7 @@ func render(next, prev ComponentOrHTML, send func(Msg)) (nextHTML *HTML, skip bo
 	switch v := next.(type) {
 	case *HTML:
 		// Cases 1, 2 and 3 above. Reconcile against the prevRender.
-		pendingMounts = v.reconcile(extractHTML(prev))
+		pendingMounts = v.reconcile(extractHTML(prev), send)
 		return v, false, pendingMounts
 	case Component:
 		// Cases 4, 5, and 6 above.
@@ -1057,7 +1057,7 @@ func renderComponent(next Component, prev ComponentOrHTML, send func(Msg)) (next
 		}
 		nextHTML = v
 		// Reconcile the actual rendered HTML.
-		pendingMounts = nextHTML.reconcile(extractHTML(prev))
+		pendingMounts = nextHTML.reconcile(extractHTML(prev), send)
 	default:
 		panic("vecty: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(v).String() + ")")
 	}
