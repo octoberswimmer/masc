@@ -114,16 +114,9 @@ func (p *Program) exec(c ExecCommand, fn ExecCallback) {
 
 	// Execute system command.
 	if err := c.Run(); err != nil {
-		_ = p.RestoreTerminal() // also try to restore the terminal.
 		if fn != nil {
 			go p.Send(fn(err))
 		}
 		return
-	}
-
-	// Have the program re-capture input.
-	err := p.RestoreTerminal()
-	if fn != nil {
-		go p.Send(fn(err))
 	}
 }

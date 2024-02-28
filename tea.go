@@ -303,9 +303,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case QuitMsg:
 				return model, nil
 
-			case clearScreenMsg:
-				p.renderer.clearScreen()
-
 			case execMsg:
 				// NB: this blocks.
 				p.exec(msg.cmd, msg.fn)
@@ -346,11 +343,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case setWindowTitleMsg:
 				SetTitle(string(msg))
-			}
-
-			// Process internal messages for the renderer.
-			if r, ok := p.renderer.(*standardRenderer); ok {
-				r.handleMessages(msg)
 			}
 
 			var cmd Cmd
@@ -548,52 +540,4 @@ func (p *Program) ReleaseTerminal() error {
 	}
 
 	return nil
-}
-
-// RestoreTerminal reinitializes the Program's input reader, restores the
-// terminal to the former state when the program was running, and repaints.
-// Use it to reinitialize a Program after running ReleaseTerminal.
-func (p *Program) RestoreTerminal() error {
-	atomic.StoreUint32(&p.ignoreSignals, 0)
-
-	if err := p.initCancelReader(); err != nil {
-		return err
-	}
-	// entering alt screen already causes a repaint.
-	go p.Send(repaintMsg{})
-	if p.renderer != nil {
-		p.renderer.start()
-	}
-
-	// If the output is a terminal, it may have been resized while another
-	// process was at the foreground, in which case we may not have received
-	// SIGWINCH. Detect any size change now and propagate the new size as
-	// needed.
-	go p.checkResize()
-
-	return nil
-}
-
-// Println prints above the Program. This output is unmanaged by the program
-// and will persist across renders by the Program.
-//
-// If the altscreen is active no output will be printed.
-func (p *Program) Println(args ...interface{}) {
-	p.msgs <- printLineMessage{
-		messageBody: fmt.Sprint(args...),
-	}
-}
-
-// Printf prints above the Program. It takes a format template followed by
-// values similar to fmt.Printf. This output is unmanaged by the program and
-// will persist across renders by the Program.
-//
-// Unlike fmt.Printf (but similar to log.Printf) the message will be print on
-// its own line.
-//
-// If the altscreen is active no output will be printed.
-func (p *Program) Printf(template string, args ...interface{}) {
-	p.msgs <- printLineMessage{
-		messageBody: fmt.Sprintf(template, args...),
-	}
 }
