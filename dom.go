@@ -1,6 +1,7 @@
 package rumtew
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -800,7 +801,7 @@ func Text(text string, m ...MarkupOrChild) *HTML {
 // there is no guarantee that a calls to Rerender will map 1:1 with calls to
 // the Component's Render method. For example, two calls to Rerender may
 // result in only one call to the Component's Render method.
-func Rerender(c Component, send func(Msg)) {
+func rerender(c Component, send func(Msg)) {
 	if c == nil {
 		panic("vecty: Rerender illegally called with a nil Component argument")
 	}
@@ -1183,12 +1184,14 @@ func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) in
 //	select{} // run Go forever
 func RenderBody(body Component, send func(Msg)) {
 	target := global().Get("document").Call("querySelector", "body")
+	fmt.Printf("Got body: %+v\n", target)
 	err := renderIntoNode("RenderBody", target, body, send)
+	fmt.Printf("Rrendered into body: %+v\n", err)
 	if err != nil {
 		panic(err)
 	}
 	if !isTest {
-		select {} // run Go forever
+		// select {} // run Go forever
 	}
 }
 

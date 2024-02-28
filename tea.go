@@ -276,9 +276,6 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 }
 
 func (p *Program) disableMouse() {
-	p.renderer.disableMouseCellMotion()
-	p.renderer.disableMouseAllMotion()
-	p.renderer.disableMouseSGRMode()
 }
 
 // eventLoop is the central message loop. It receives and handles the default
@@ -308,37 +305,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			case clearScreenMsg:
 				p.renderer.clearScreen()
-
-			case enterAltScreenMsg:
-				p.renderer.enterAltScreen()
-
-			case exitAltScreenMsg:
-				p.renderer.exitAltScreen()
-
-			case enableMouseCellMotionMsg, enableMouseAllMotionMsg:
-				switch msg.(type) {
-				case enableMouseCellMotionMsg:
-					p.renderer.enableMouseCellMotion()
-				case enableMouseAllMotionMsg:
-					p.renderer.enableMouseAllMotion()
-				}
-				// mouse mode (1006) is a no-op if the terminal doesn't support it.
-				p.renderer.enableMouseSGRMode()
-
-			case disableMouseMsg:
-				p.disableMouse()
-
-			case showCursorMsg:
-				p.renderer.showCursor()
-
-			case hideCursorMsg:
-				p.renderer.hideCursor()
-
-			case enableBracketedPasteMsg:
-				p.renderer.enableBracketedPaste()
-
-			case disableBracketedPasteMsg:
-				p.renderer.disableBracketedPaste()
 
 			case execMsg:
 				// NB: this blocks.
@@ -425,26 +391,13 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
+		fmt.Println("Initializing standard renderer")
 		p.renderer = newRenderer()
-	}
-
-	// Honor program startup options.
-	if p.startupOptions&withAltScreen != 0 {
-		p.renderer.enterAltScreen()
-	}
-	if p.startupOptions&withoutBracketedPaste == 0 {
-		p.renderer.enableBracketedPaste()
-	}
-	if p.startupOptions&withMouseCellMotion != 0 {
-		p.renderer.enableMouseCellMotion()
-		p.renderer.enableMouseSGRMode()
-	} else if p.startupOptions&withMouseAllMotion != 0 {
-		p.renderer.enableMouseAllMotion()
-		p.renderer.enableMouseSGRMode()
 	}
 
 	// Initialize the program.
 	model := p.initialModel
+	fmt.Println("Initializizing Model")
 	if initCmd := model.Init(); initCmd != nil {
 		ch := make(chan struct{})
 		handlers.add(ch)
@@ -458,12 +411,16 @@ func (p *Program) Run() (Model, error) {
 			}
 		}()
 	}
+	fmt.Println("Initialized Model")
 
 	// Start the renderer.
 	p.renderer.start()
+	fmt.Println("Started Renderer")
 
 	// Render the initial view.
+	fmt.Println("Calling Render")
 	p.renderer.render(model, p.Send)
+	fmt.Println("Render Called")
 
 	// Subscribe to user input.
 	if p.input != nil {
@@ -590,8 +547,6 @@ func (p *Program) ReleaseTerminal() error {
 		p.renderer.stop()
 	}
 
-	p.altScreenWasActive = p.renderer.altScreen()
-	p.bpWasActive = p.renderer.bracketedPasteActive()
 	return nil
 }
 
@@ -604,17 +559,10 @@ func (p *Program) RestoreTerminal() error {
 	if err := p.initCancelReader(); err != nil {
 		return err
 	}
-	if p.altScreenWasActive {
-		p.renderer.enterAltScreen()
-	} else {
-		// entering alt screen already causes a repaint.
-		go p.Send(repaintMsg{})
-	}
+	// entering alt screen already causes a repaint.
+	go p.Send(repaintMsg{})
 	if p.renderer != nil {
 		p.renderer.start()
-	}
-	if p.bpWasActive {
-		p.renderer.enableBracketedPaste()
 	}
 
 	// If the output is a terminal, it may have been resized while another

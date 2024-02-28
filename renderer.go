@@ -23,50 +23,6 @@ type renderer interface {
 
 	// Clears the terminal.
 	clearScreen()
-
-	// Whether or not the alternate screen buffer is enabled.
-	altScreen() bool
-	// Enable the alternate screen buffer.
-	enterAltScreen()
-	// Disable the alternate screen buffer.
-	exitAltScreen()
-
-	// Show the cursor.
-	showCursor()
-	// Hide the cursor.
-	hideCursor()
-
-	// enableMouseCellMotion enables mouse click, release, wheel and motion
-	// events if a mouse button is pressed (i.e., drag events).
-	enableMouseCellMotion()
-
-	// disableMouseCellMotion disables Mouse Cell Motion tracking.
-	disableMouseCellMotion()
-
-	// enableMouseAllMotion enables mouse click, release, wheel and motion
-	// events, regardless of whether a mouse button is pressed. Many modern
-	// terminals support this, but not all.
-	enableMouseAllMotion()
-
-	// disableMouseAllMotion disables All Motion mouse tracking.
-	disableMouseAllMotion()
-
-	// enableMouseSGRMode enables mouse extended mode (SGR).
-	enableMouseSGRMode()
-
-	// disableMouseSGRMode disables mouse extended mode (SGR).
-	disableMouseSGRMode()
-
-	// enableBracketedPaste enables bracketed paste, where characters
-	// inside the input are not interpreted when pasted as a whole.
-	enableBracketedPaste()
-
-	// disableBracketedPaste disables bracketed paste.
-	disableBracketedPaste()
-
-	// bracketedPasteActive reports whether bracketed paste mode is
-	// currently enabled.
-	bracketedPasteActive() bool
 }
 
 // repaintMsg forces a full repaint.
