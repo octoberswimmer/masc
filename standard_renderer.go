@@ -133,12 +133,11 @@ func isZeroValue(v js.Value) bool {
 }
 
 func (r *standardRenderer) render(c Component, send func(Msg)) {
-	fmt.Println("Waiting for mutex")
 	r.mtx.Lock()
-	fmt.Println("Got mutex")
 	defer r.mtx.Unlock()
 	if r.rendered {
 		rerender(c, send)
+		return
 	}
 	r.rendered = true
 	if !isZeroValue(r.rootNode) {
