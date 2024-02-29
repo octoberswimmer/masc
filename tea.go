@@ -15,11 +15,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
-	"syscall"
 
 	"github.com/muesli/cancelreader"
 	"golang.org/x/sync/errgroup"
@@ -198,42 +196,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	return p
 }
 
-func (p *Program) handleSignals() chan struct{} {
-	ch := make(chan struct{})
-
-	// Listen for SIGINT and SIGTERM.
-	//
-	// In most cases ^C will not send an interrupt because the terminal will be
-	// in raw mode and ^C will be captured as a keystroke and sent along to
-	// Program.Update as a KeyMsg. When input is not a TTY, however, ^C will be
-	// caught here.
-	//
-	// SIGTERM is sent by unix utilities (like kill) to terminate a process.
-	go func() {
-		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-		defer func() {
-			signal.Stop(sig)
-			close(ch)
-		}()
-
-		for {
-			select {
-			case <-p.ctx.Done():
-				return
-
-			case <-sig:
-				if atomic.LoadUint32(&p.ignoreSignals) == 0 {
-					p.msgs <- QuitMsg{}
-					return
-				}
-			}
-		}
-	}()
-
-	return ch
-}
-
 // handleResize handles terminal resize events.
 func (p *Program) handleResize() chan struct{} {
 	ch := make(chan struct{})
@@ -363,11 +325,6 @@ func (p *Program) Run() (Model, error) {
 	p.finished = make(chan struct{}, 1)
 
 	defer p.cancel()
-
-	// Handle signals.
-	if !p.startupOptions.has(withoutSignalHandler) {
-		handlers.add(p.handleSignals())
-	}
 
 	// Recover from panics.
 	if !p.startupOptions.has(withoutCatchPanics) {
