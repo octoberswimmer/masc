@@ -317,13 +317,11 @@ func (p *Program) Run() (Model, error) {
 
 	// If no renderer is set use the standard one.
 	if p.renderer == nil {
-		fmt.Println("Initializing standard renderer")
 		p.renderer = newRenderer()
 	}
 
 	// Initialize the program.
 	model := p.initialModel
-	fmt.Println("Initializizing Model")
 	if initCmd := model.Init(); initCmd != nil {
 		ch := make(chan struct{})
 		handlers.add(ch)
@@ -337,19 +335,12 @@ func (p *Program) Run() (Model, error) {
 			}
 		}()
 	}
-	fmt.Println("Initialized Model")
 
 	// Start the renderer.
 	p.renderer.start()
-	fmt.Println("Started Renderer")
 
 	// Render the initial view.
-	fmt.Println("Calling Render")
 	p.renderer.render(model, p.Send)
-	fmt.Println("Render Called")
-
-	// Handle resize events.
-	handlers.add(p.handleResize())
 
 	// Process commands.
 	handlers.add(p.handleCommands(cmds))
@@ -435,13 +426,5 @@ func (p *Program) Wait() {
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
 func (p *Program) shutdown(kill bool) {
-	if p.renderer != nil {
-		if kill {
-			p.renderer.kill()
-		} else {
-			p.renderer.stop()
-		}
-	}
-
 	p.finished <- struct{}{}
 }

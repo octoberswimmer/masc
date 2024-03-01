@@ -5,12 +5,6 @@ type renderer interface {
 	// Start the renderer.
 	start()
 
-	// Stop the renderer, but render the final frame in the buffer, if any.
-	stop()
-
-	// Stop the renderer without doing any final rendering.
-	kill()
-
 	// Write a frame to the renderer. The renderer can write this data to
 	// output at its discretion.
 	render(Component, func(Msg))
