@@ -13,11 +13,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"os"
 	"runtime/debug"
 	"sync"
-	"sync/atomic"
 
 	"github.com/muesli/cancelreader"
 	"golang.org/x/sync/errgroup"
@@ -133,29 +130,13 @@ type Program struct {
 	errs     chan error
 	finished chan struct{}
 
-	// where to send output, this will usually be os.Stdout.
-	restoreOutput func() error
-	renderer      renderer
+	renderer renderer
 
 	// where to read inputs from, this will usually be os.Stdin.
-	input        io.Reader
 	cancelReader cancelreader.CancelReader
 	readLoopDone chan struct{}
 
-	// was the altscreen active before releasing the terminal?
-	altScreenWasActive bool
-	ignoreSignals      uint32
-
-	bpWasActive bool // was the bracketed paste mode active before releasing the terminal?
-
-	// Stores the original reference to stdin for cases where input is not a
-	// TTY on windows and we've automatically opened CONIN$ to receive input.
-	// When the program exits this will be restored.
-	//
-	// Lint ignore note: the linter will find false positive on unix systems
-	// as this value only comes into play on Windows, hence the ignore comment
-	// below.
-	windowsStdin *os.File //nolint:golint,structcheck,unused
+	ignoreSignals uint32
 
 	filter func(Model, Msg) Msg
 
@@ -265,10 +246,6 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 			case QuitMsg:
 				return model, nil
 
-			case execMsg:
-				// NB: this blocks.
-				p.exec(msg.cmd, msg.fn)
-
 			case BatchMsg:
 				for _, cmd := range msg {
 					cmds <- cmd
@@ -371,13 +348,6 @@ func (p *Program) Run() (Model, error) {
 	p.renderer.render(model, p.Send)
 	fmt.Println("Render Called")
 
-	// Subscribe to user input.
-	if p.input != nil {
-		if err := p.initCancelReader(); err != nil {
-			return model, err
-		}
-	}
-
 	// Handle resize events.
 	handlers.add(p.handleResize())
 
@@ -396,15 +366,6 @@ func (p *Program) Run() (Model, error) {
 
 	// Tear down.
 	p.cancel()
-
-	// Check if the cancel reader has been setup before waiting and closing.
-	if p.cancelReader != nil {
-		// Wait for input loop to finish.
-		if p.cancelReader.Cancel() {
-			p.waitForReadLoop()
-		}
-		_ = p.cancelReader.Close()
-	}
 
 	// Wait for all handlers to finish.
 	handlers.shutdown()
@@ -483,18 +444,4 @@ func (p *Program) shutdown(kill bool) {
 	}
 
 	p.finished <- struct{}{}
-}
-
-// ReleaseTerminal restores the original terminal state and cancels the input
-// reader. You can return control to the Program with RestoreTerminal.
-func (p *Program) ReleaseTerminal() error {
-	atomic.StoreUint32(&p.ignoreSignals, 1)
-	p.cancelReader.Cancel()
-	p.waitForReadLoop()
-
-	if p.renderer != nil {
-		p.renderer.stop()
-	}
-
-	return nil
 }

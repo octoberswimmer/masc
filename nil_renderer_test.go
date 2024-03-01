@@ -7,7 +7,7 @@ func TestNilRenderer(t *testing.T) {
 	r.start()
 	r.stop()
 	r.kill()
-	r.write("a")
+	r.render(&testCore{}, func(Msg) {})
 	r.repaint()
 	r.enterAltScreen()
 	if r.altScreen() {

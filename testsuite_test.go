@@ -32,8 +32,8 @@ type componentFunc struct {
 	skipRender func(prev Component) bool
 }
 
-func (c *componentFunc) Render() ComponentOrHTML        { return c.render() }
-func (c *componentFunc) SkipRender(prev Component) bool { return c.skipRender(prev) }
+func (c *componentFunc) Render(send func(Msg)) ComponentOrHTML { return c.render() }
+func (c *componentFunc) SkipRender(prev Component) bool        { return c.skipRender(prev) }
 
 func TestMain(m *testing.M) {
 	// Try to remove all testdata/*.got.txt files now.

@@ -1,7 +1,6 @@
 package rumtew
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -1188,9 +1187,7 @@ func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) in
 //	select{} // run Go forever
 func RenderBody(body Component, send func(Msg)) {
 	target := global().Get("document").Call("querySelector", "body")
-	fmt.Printf("Got body: %+v\n", target)
 	err := renderIntoNode("RenderBody", target, body, send)
-	fmt.Printf("Rrendered into body: %+v\n", err)
 	if err != nil {
 		panic(err)
 	}

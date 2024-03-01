@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"sync"
-	"syscall/js"
 	"time"
 )
 
@@ -21,7 +20,7 @@ const (
 // In cases where very high performance is needed the renderer can be told
 // to exclude ranges of lines, allowing them to be written to directly.
 type standardRenderer struct {
-	rootNode js.Value
+	rootNode jsObject
 	rendered bool
 
 	mtx *sync.Mutex
@@ -61,7 +60,7 @@ func newRenderer() renderer {
 	return r
 }
 
-func newNodeRenderer(node js.Value) renderer {
+func newNodeRenderer(node jsObject) renderer {
 	r := &standardRenderer{
 		mtx:      &sync.Mutex{},
 		rootNode: node,
@@ -127,8 +126,8 @@ func (r *standardRenderer) flush() {
 	defer r.mtx.Unlock()
 }
 
-func isZeroValue(v js.Value) bool {
-	return !v.Truthy()
+func isZeroValue(v jsObject) bool {
+	return v == nil || !v.Truthy()
 }
 
 func (r *standardRenderer) render(c Component, send func(Msg)) {
@@ -141,7 +140,7 @@ func (r *standardRenderer) render(c Component, send func(Msg)) {
 	r.rendered = true
 	if !isZeroValue(r.rootNode) {
 		fmt.Printf("Rendering into rootNode: %+v\n", r.rootNode)
-		RenderIntoNode(r.rootNode, c, send)
+		renderIntoNode("RenderIntoNode", r.rootNode, c, send)
 	} else {
 		fmt.Printf("Rendering into body\n")
 		RenderBody(c, send)

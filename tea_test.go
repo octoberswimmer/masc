@@ -11,6 +11,7 @@ import (
 type incrementMsg struct{}
 
 type testModel struct {
+	Core
 	executed atomic.Value
 	counter  atomic.Value
 }
@@ -36,9 +37,9 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 	return m, nil
 }
 
-func (m *testModel) View() string {
+func (m *testModel) Render(send func(Msg)) ComponentOrHTML {
 	m.executed.Store(true)
-	return "success\n"
+	return Tag("div")
 }
 
 func TestTeaModel(t *testing.T) {
@@ -46,7 +47,7 @@ func TestTeaModel(t *testing.T) {
 	var in bytes.Buffer
 	in.Write([]byte("q"))
 
-	p := NewProgram(&testModel{}, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(&testModel{})
 	if _, err := p.Run(); err != nil {
 		t.Fatal(err)
 	}
@@ -57,11 +58,8 @@ func TestTeaModel(t *testing.T) {
 }
 
 func TestTeaQuit(t *testing.T) {
-	var buf bytes.Buffer
-	var in bytes.Buffer
-
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -84,14 +82,9 @@ func TestTeaWithFilter(t *testing.T) {
 }
 
 func testTeaWithFilter(t *testing.T, preventCount uint32) {
-	var buf bytes.Buffer
-	var in bytes.Buffer
-
 	m := &testModel{}
 	shutdowns := uint32(0)
 	p := NewProgram(m,
-		WithInput(&in),
-		WithOutput(&buf),
 		WithFilter(func(_ Model, msg Msg) Msg {
 			if _, ok := msg.(QuitMsg); !ok {
 				return msg
@@ -119,11 +112,8 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 }
 
 func TestTeaKill(t *testing.T) {
-	var buf bytes.Buffer
-	var in bytes.Buffer
-
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m)
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -141,11 +131,9 @@ func TestTeaKill(t *testing.T) {
 
 func TestTeaContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	var buf bytes.Buffer
-	var in bytes.Buffer
 
 	m := &testModel{}
-	p := NewProgram(m, WithContext(ctx), WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m, WithContext(ctx))
 	go func() {
 		for {
 			time.Sleep(time.Millisecond)
@@ -162,15 +150,12 @@ func TestTeaContext(t *testing.T) {
 }
 
 func TestTeaBatchMsg(t *testing.T) {
-	var buf bytes.Buffer
-	var in bytes.Buffer
-
 	inc := func() Msg {
 		return incrementMsg{}
 	}
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m)
 	go func() {
 		p.Send(BatchMsg{inc, inc})
 
@@ -194,15 +179,12 @@ func TestTeaBatchMsg(t *testing.T) {
 }
 
 func TestTeaSequenceMsg(t *testing.T) {
-	var buf bytes.Buffer
-	var in bytes.Buffer
-
 	inc := func() Msg {
 		return incrementMsg{}
 	}
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m)
 	go p.Send(sequenceMsg{inc, inc, Quit})
 
 	if _, err := p.Run(); err != nil {
@@ -215,9 +197,6 @@ func TestTeaSequenceMsg(t *testing.T) {
 }
 
 func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
-	var buf bytes.Buffer
-	var in bytes.Buffer
-
 	inc := func() Msg {
 		return incrementMsg{}
 	}
@@ -226,7 +205,7 @@ func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
 	}
 
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m)
 	go p.Send(sequenceMsg{batch, inc, Quit})
 
 	if _, err := p.Run(); err != nil {
@@ -239,11 +218,8 @@ func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
 }
 
 func TestTeaSend(t *testing.T) {
-	var buf bytes.Buffer
-	var in bytes.Buffer
-
 	m := &testModel{}
-	p := NewProgram(m, WithInput(&in), WithOutput(&buf))
+	p := NewProgram(m)
 
 	// sending before the program is started is a blocking operation
 	go p.Send(Quit())
@@ -257,9 +233,6 @@ func TestTeaSend(t *testing.T) {
 }
 
 func TestTeaNoRun(t *testing.T) {
-	var buf bytes.Buffer
-	var in bytes.Buffer
-
 	m := &testModel{}
-	NewProgram(m, WithInput(&in), WithOutput(&buf))
+	NewProgram(m)
 }

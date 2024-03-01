@@ -7,11 +7,11 @@ import (
 
 type testCore struct{ Core }
 
-func (testCore) Render() ComponentOrHTML { return Tag("p") }
+func (testCore) Render(send func(Msg)) ComponentOrHTML { return Tag("p") }
 
 type testCorePtr struct{ *Core }
 
-func (testCorePtr) Render() ComponentOrHTML { return Tag("p") }
+func (testCorePtr) Render(send func(Msg)) ComponentOrHTML { return Tag("p") }
 
 func TestCore(t *testing.T) {
 	// Test that a standard *MyComponent with embedded Core works as we expect.
@@ -84,6 +84,8 @@ func TestHTML_Node(t *testing.T) {
 	}
 }
 
+func send(Msg) {}
+
 // TestHTML_reconcile_std tests that (*HTML).reconcile against an old HTML instance
 // works as expected (i.e. that it updates nodes correctly).
 func TestHTML_reconcile_std(t *testing.T) {
@@ -92,20 +94,20 @@ func TestHTML_reconcile_std(t *testing.T) {
 		defer ts.done()
 
 		init := Text("foobar")
-		init.reconcile(nil)
+		init.reconcile(nil, send)
 
 		target := Text("foobar")
-		target.reconcile(init)
+		target.reconcile(init, send)
 	})
 	t.Run("text_diff", func(t *testing.T) {
 		ts := testSuite(t)
 		defer ts.done()
 
 		init := Text("bar")
-		init.reconcile(nil)
+		init.reconcile(nil, send)
 
 		target := Text("foo")
-		target.reconcile(init)
+		target.reconcile(init, send)
 	})
 	t.Run("properties", func(t *testing.T) {
 		cases := []struct {
@@ -144,9 +146,9 @@ func TestHTML_reconcile_std(t *testing.T) {
 				ts := testSuite(t)
 				defer ts.multiSortedDone(tst.sortedLines...)
 
-				tst.initHTML.reconcile(nil)
+				tst.initHTML.reconcile(nil, send)
 				ts.record("(first reconcile done)")
-				tst.targetHTML.reconcile(tst.initHTML)
+				tst.targetHTML.reconcile(tst.initHTML, send)
 			})
 		}
 	})
@@ -175,9 +177,9 @@ func TestHTML_reconcile_std(t *testing.T) {
 				ts := testSuite(t)
 				defer ts.multiSortedDone(tst.sortedLines...)
 
-				tst.initHTML.reconcile(nil)
+				tst.initHTML.reconcile(nil, send)
 				ts.record("(first reconcile done)")
-				tst.targetHTML.reconcile(tst.initHTML)
+				tst.targetHTML.reconcile(tst.initHTML, send)
 			})
 		}
 	})
@@ -230,9 +232,9 @@ func TestHTML_reconcile_std(t *testing.T) {
 				ts := testSuite(t)
 				defer ts.multiSortedDone(tst.sortedLines...)
 
-				tst.initHTML.reconcile(nil)
+				tst.initHTML.reconcile(nil, send)
 				ts.record("(first reconcile done)")
-				tst.targetHTML.reconcile(tst.initHTML)
+				tst.targetHTML.reconcile(tst.initHTML, send)
 			})
 		}
 	})
@@ -261,9 +263,9 @@ func TestHTML_reconcile_std(t *testing.T) {
 				ts := testSuite(t)
 				defer ts.multiSortedDone(tst.sortedLines...)
 
-				tst.initHTML.reconcile(nil)
+				tst.initHTML.reconcile(nil, send)
 				ts.record("(first reconcile done)")
-				tst.targetHTML.reconcile(tst.initHTML)
+				tst.targetHTML.reconcile(tst.initHTML, send)
 			})
 		}
 	})
@@ -292,9 +294,9 @@ func TestHTML_reconcile_std(t *testing.T) {
 				ts := testSuite(t)
 				defer ts.multiSortedDone(tst.sortedLines...)
 
-				tst.initHTML.reconcile(nil)
+				tst.initHTML.reconcile(nil, send)
 				ts.record("(first reconcile done)")
-				tst.targetHTML.reconcile(tst.initHTML)
+				tst.targetHTML.reconcile(tst.initHTML, send)
 			})
 		}
 	})
@@ -308,7 +310,7 @@ func TestHTML_reconcile_std(t *testing.T) {
 			&EventListener{Name: "keydown"},
 		}
 		prev := Tag("div", Markup(initEventListeners...))
-		prev.reconcile(nil)
+		prev.reconcile(nil, send)
 		ts.record("(expected two added event listeners above)")
 		for i, m := range initEventListeners {
 			listener := m.(*EventListener)
@@ -321,7 +323,7 @@ func TestHTML_reconcile_std(t *testing.T) {
 			&EventListener{Name: "click"},
 		}
 		h := Tag("div", Markup(targetEventListeners...))
-		h.reconcile(prev)
+		h.reconcile(prev, send)
 		ts.record("(expected two removed, one added event listeners above)")
 		for i, m := range targetEventListeners {
 			listener := m.(*EventListener)
@@ -341,7 +343,7 @@ func TestHTML_reconcile_nil(t *testing.T) {
 	t.Run("one_of_tag_or_text", func(t *testing.T) {
 		got := recoverStr(func() {
 			h := &HTML{text: "hello", tag: "div"}
-			h.reconcile(nil)
+			h.reconcile(nil, send)
 		})
 		want := "vecty: internal error (only one of HTML.tag or HTML.text may be set)"
 		if got != want {
@@ -351,7 +353,7 @@ func TestHTML_reconcile_nil(t *testing.T) {
 	t.Run("unsafe_text", func(t *testing.T) {
 		got := recoverStr(func() {
 			h := &HTML{text: "hello", innerHTML: "foobar"}
-			h.reconcile(nil)
+			h.reconcile(nil, send)
 		})
 		want := "vecty: only HTML may have UnsafeHTML attribute"
 		if got != want {
@@ -363,56 +365,56 @@ func TestHTML_reconcile_nil(t *testing.T) {
 		defer ts.done()
 
 		h := Tag("strong")
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 	})
 	t.Run("create_element_ns", func(t *testing.T) {
 		ts := testSuite(t)
 		defer ts.done()
 
 		h := Tag("strong", Markup(Namespace("foobar")))
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 	})
 	t.Run("create_text_node", func(t *testing.T) {
 		ts := testSuite(t)
 		defer ts.done()
 
 		h := Text("hello")
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 	})
 	t.Run("inner_html", func(t *testing.T) {
 		ts := testSuite(t)
 		defer ts.done()
 
 		h := Tag("div", Markup(UnsafeHTML("<p>hello</p>")))
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 	})
 	t.Run("properties", func(t *testing.T) {
 		ts := testSuite(t)
 		defer ts.sortedDone(3, 4)
 
 		h := Tag("div", Markup(Property("a", 1), Property("b", "2foobar")))
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 	})
 	t.Run("attributes", func(t *testing.T) {
 		ts := testSuite(t)
 		defer ts.sortedDone(3, 4)
 
 		h := Tag("div", Markup(Attribute("a", 1), Attribute("b", "2foobar")))
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 	})
 	t.Run("dataset", func(t *testing.T) {
 		ts := testSuite(t)
 		defer ts.sortedDone(5, 6)
 
 		h := Tag("div", Markup(Data("a", "1"), Data("b", "2foobar")))
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 	})
 	t.Run("style", func(t *testing.T) {
 		ts := testSuite(t)
 		defer ts.sortedDone(6, 7)
 
 		h := Tag("div", Markup(Style("a", "1"), Style("b", "2foobar")))
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 	})
 	t.Run("add_event_listener", func(t *testing.T) {
 		ts := testSuite(t)
@@ -421,7 +423,7 @@ func TestHTML_reconcile_nil(t *testing.T) {
 		e0 := &EventListener{Name: "click"}
 		e1 := &EventListener{Name: "keydown"}
 		h := Tag("div", Markup(e0, e1))
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 		if e0.wrapper == nil {
 			t.Fatal("e0.wrapper == nil")
 		}
@@ -443,7 +445,7 @@ func TestHTML_reconcile_nil(t *testing.T) {
 			},
 		}
 		h := Tag("div", Tag("div", comp))
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 		if compRenderCalls != 1 {
 			t.Fatal("compRenderCalls != 1")
 		}
@@ -467,7 +469,7 @@ func TestHTML_reconcile_nil(t *testing.T) {
 			},
 		}
 		h := Tag("div", Tag("div", comp))
-		h.reconcile(nil)
+		h.reconcile(nil, send)
 		if compRenderCalls != 1 {
 			t.Fatal("compRenderCalls != 1")
 		}
@@ -525,7 +527,7 @@ func TestRerender_nil(t *testing.T) {
 				gotPanic = fmt.Sprint(r)
 			}
 		}()
-		Rerender(nil)
+		rerender(nil, send)
 	}()
 	expected := "vecty: Rerender illegally called with a nil Component argument"
 	if gotPanic != expected {
@@ -540,14 +542,14 @@ func TestRerender_no_prevRender(t *testing.T) {
 	defer ts.done()
 
 	got := recoverStr(func() {
-		Rerender(&componentFunc{
+		rerender(&componentFunc{
 			render: func() ComponentOrHTML {
 				panic("expected no Render call")
 			},
 			skipRender: func(prev Component) bool {
 				panic("expected no SkipRender call")
 			},
-		})
+		}, send)
 	})
 	want := "vecty: Rerender invoked on Component that has never been rendered"
 	if got != want {
@@ -576,7 +578,7 @@ func TestRerender_identical(t *testing.T) {
 			return render
 		},
 	}
-	RenderBody(comp)
+	RenderBody(comp, send)
 	if renderCalled != 1 {
 		t.Fatal("renderCalled != 1")
 	}
@@ -607,7 +609,7 @@ func TestRerender_identical(t *testing.T) {
 		skipRenderCalled++
 		return false
 	}
-	Rerender(comp)
+	rerender(comp, send)
 
 	// Invoke the render callback.
 	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
@@ -665,7 +667,7 @@ func TestRerender_change(t *testing.T) {
 					return render
 				},
 			}
-			RenderBody(comp)
+			RenderBody(comp, send)
 			ts.record("(expect body to be set now)")
 			if renderCalled != 1 {
 				t.Fatal("renderCalled != 1")
@@ -696,7 +698,7 @@ func TestRerender_change(t *testing.T) {
 				skipRenderCalled++
 				return false
 			}
-			Rerender(comp)
+			rerender(comp, send)
 
 			// Invoke the render callback.
 			ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
@@ -769,7 +771,7 @@ func TestRerender_Nested(t *testing.T) {
 					return tst.initialRender
 				},
 			}
-			RenderBody(comp)
+			RenderBody(comp, send)
 			ts.record("(expect body to be set now)")
 			if renderCalled != 1 {
 				t.Fatal("renderCalled != 1")
@@ -800,7 +802,7 @@ func TestRerender_Nested(t *testing.T) {
 				skipRenderCalled++
 				return false
 			}
-			Rerender(comp)
+			rerender(comp, send)
 
 			// Invoke the render callback.
 			ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
@@ -823,7 +825,7 @@ type persistentComponentBody struct {
 	Core
 }
 
-func (c *persistentComponentBody) Render() ComponentOrHTML {
+func (c *persistentComponentBody) Render(send func(Msg)) ComponentOrHTML {
 	return Tag(
 		"body",
 		&persistentComponent{},
@@ -839,7 +841,7 @@ type persistentComponent struct {
 	Core
 }
 
-func (c *persistentComponent) Render() ComponentOrHTML {
+func (c *persistentComponent) Render(send func(Msg)) ComponentOrHTML {
 	if lastRenderedComponent == nil {
 		lastRenderedComponent = c
 	} else if lastRenderedComponent != c {
@@ -865,14 +867,14 @@ func TestRerender_persistent(t *testing.T) {
 
 	comp := &persistentComponentBody{}
 	// Perform the initial render of the component.
-	RenderBody(comp)
+	RenderBody(comp, send)
 
 	if renderCount != 1 {
 		t.Fatal("renderCount != 1")
 	}
 
 	// Perform a re-render.
-	Rerender(comp)
+	rerender(comp, send)
 
 	// Invoke the render callback.
 	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
@@ -883,7 +885,7 @@ func TestRerender_persistent(t *testing.T) {
 	}
 
 	// Perform a re-render.
-	Rerender(comp)
+	rerender(comp, send)
 
 	// Invoke the render callback.
 	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
@@ -898,7 +900,7 @@ type persistentComponentBody2 struct {
 	Core
 }
 
-func (c *persistentComponentBody2) Render() ComponentOrHTML {
+func (c *persistentComponentBody2) Render(send func(Msg)) ComponentOrHTML {
 	return Tag(
 		"body",
 		&persistentWrapperComponent{},
@@ -909,7 +911,7 @@ type persistentWrapperComponent struct {
 	Core
 }
 
-func (c *persistentWrapperComponent) Render() ComponentOrHTML {
+func (c *persistentWrapperComponent) Render(send func(Msg)) ComponentOrHTML {
 	return &persistentComponent{}
 }
 
@@ -929,14 +931,14 @@ func TestRerender_persistent_direct(t *testing.T) {
 
 	comp := &persistentComponentBody2{}
 	// Perform the initial render of the component.
-	RenderBody(comp)
+	RenderBody(comp, send)
 
 	if renderCount != 1 {
 		t.Fatal("renderCount != 1")
 	}
 
 	// Perform a re-render.
-	Rerender(comp)
+	rerender(comp, send)
 
 	// Invoke the render callback.
 	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
@@ -947,7 +949,7 @@ func TestRerender_persistent_direct(t *testing.T) {
 	}
 
 	// Perform a re-render.
-	Rerender(comp)
+	rerender(comp, send)
 
 	// Invoke the render callback.
 	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
@@ -1003,7 +1005,7 @@ func TestRenderBody_ExpectsBody(t *testing.T) {
 						return c.render
 					},
 					skipRender: func(prev Component) bool { return false },
-				})
+				}, send)
 			}()
 			if c.wantPanic != gotPanic {
 				t.Fatalf("want panic:\n%q\ngot panic:\n%q", c.wantPanic, gotPanic)
@@ -1031,7 +1033,7 @@ func TestRenderBody_RenderSkipper_Skip(t *testing.T) {
 	fakePrevRender := *comp
 	comp.Context().prevRenderComponent = &fakePrevRender
 	got := recoverStr(func() {
-		RenderBody(comp)
+		RenderBody(comp, send)
 	})
 	want := "vecty: RenderBody: Component.SkipRender illegally returned true"
 	if got != want {
@@ -1055,7 +1057,7 @@ func TestRenderBody_Standard_loaded(t *testing.T) {
 		render: func() ComponentOrHTML {
 			return Tag("body")
 		},
-	})
+	}, send)
 }
 
 // TestRenderBody_Standard_loading tests that RenderBody properly handles the
@@ -1074,7 +1076,7 @@ func TestRenderBody_Standard_loading(t *testing.T) {
 		render: func() ComponentOrHTML {
 			return Tag("body")
 		},
-	})
+	}, send)
 
 	ts.record("(invoking DOMContentLoaded event listener)")
 	ts.invokeCallbackDOMContentLoaded()
@@ -1103,7 +1105,7 @@ func TestRenderBody_Nested(t *testing.T) {
 				},
 			}
 		},
-	})
+	}, send)
 }
 
 // TestSetTitle tests that the SetTitle function performs the correct DOM
@@ -1139,17 +1141,17 @@ func TestKeyedChild_DifferentType(t *testing.T) {
 				"body",
 				Tag(
 					"tag1",
-					Markup(Key("key")),
+					Markup(ElementKey("key")),
 				),
 			)
 		},
 		skipRender: func(prev Component) bool { return false },
 	}
 
-	RenderBody(comp)
+	RenderBody(comp, send)
 
 	rerender := func() {
-		Rerender(comp)
+		rerender(comp, send)
 		ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
 		ts.invokeCallbackRequestAnimationFrame(0)
 	}
@@ -1162,7 +1164,7 @@ func TestKeyedChild_DifferentType(t *testing.T) {
 			"body",
 			Tag(
 				"tag2",
-				Markup(Key("key")),
+				Markup(ElementKey("key")),
 			),
 		)
 	}

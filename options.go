@@ -2,9 +2,7 @@ package rumtew
 
 import (
 	"context"
-	"io"
 	"sync/atomic"
-	"syscall/js"
 )
 
 // ProgramOption is used to set options when initializing a Program. Program can
@@ -21,24 +19,6 @@ type ProgramOption func(*Program)
 func WithContext(ctx context.Context) ProgramOption {
 	return func(p *Program) {
 		p.ctx = ctx
-	}
-}
-
-// WithInput sets the input which, by default, is stdin. In most cases you
-// won't need to use this. To disable input entirely pass nil.
-//
-//	p := NewProgram(model, WithInput(nil))
-func WithInput(input io.Reader) ProgramOption {
-	return func(p *Program) {
-		p.input = input
-		p.inputType = customInput
-	}
-}
-
-// WithInputTTY opens a new TTY for input (or console input device on Windows).
-func WithInputTTY() ProgramOption {
-	return func(p *Program) {
-		p.inputType = ttyInput
 	}
 }
 
@@ -68,33 +48,6 @@ func WithoutSignals() ProgramOption {
 	}
 }
 
-// WithAltScreen starts the program with the alternate screen buffer enabled
-// (i.e. the program starts in full window mode). Note that the altscreen will
-// be automatically exited when the program quits.
-//
-// Example:
-//
-//	p := tea.NewProgram(Model{}, tea.WithAltScreen())
-//	if _, err := p.Run(); err != nil {
-//	    fmt.Println("Error running program:", err)
-//	    os.Exit(1)
-//	}
-//
-// To enter the altscreen once the program has already started running use the
-// EnterAltScreen command.
-func WithAltScreen() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withAltScreen
-	}
-}
-
-// WithoutBracketedPaste starts the program with bracketed paste disabled.
-func WithoutBracketedPaste() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withoutBracketedPaste
-	}
-}
-
 // WithMouseCellMotion starts the program with the mouse enabled in "cell
 // motion" mode.
 //
@@ -117,28 +70,9 @@ func WithMouseCellMotion() ProgramOption {
 	}
 }
 
-// WithMouseAllMotion starts the program with the mouse enabled in "all motion"
-// mode.
-//
-// EnableMouseAllMotion is a special command that enables mouse click, release,
-// wheel, and motion events, which are delivered regardless of whether a mouse
-// button is pressed, effectively enabling support for hover interactions.
-//
-// This will try to enable the mouse in extended mode (SGR), if that is not
-// supported by the terminal it will fall back to normal mode (X10).
-//
-// Many modern terminals support this, but not all. If in doubt, use
-// EnableMouseCellMotion instead.
-//
-// To enable the mouse once the program has already started running use the
-// EnableMouseAllMotion command. To disable the mouse when the program is
-// running use the DisableMouse command.
-//
-// The mouse will be automatically disabled when the program exits.
-func WithMouseAllMotion() ProgramOption {
+func RenderTo(rootNode jsObject) ProgramOption {
 	return func(p *Program) {
-		p.startupOptions |= withMouseAllMotion   // set
-		p.startupOptions &^= withMouseCellMotion // clear
+		p.renderer = newNodeRenderer(rootNode)
 	}
 }
 
@@ -153,23 +87,6 @@ func WithMouseAllMotion() ProgramOption {
 func WithoutRenderer() ProgramOption {
 	return func(p *Program) {
 		p.renderer = &nilRenderer{}
-	}
-}
-
-func RenderTo(rootNode js.Value) ProgramOption {
-	return func(p *Program) {
-		p.renderer = newNodeRenderer(rootNode)
-	}
-}
-
-// WithANSICompressor removes redundant ANSI sequences to produce potentially
-// smaller output, at the cost of some processing overhead.
-//
-// This feature is provisional, and may be changed or removed in a future version
-// of this package.
-func WithANSICompressor() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withANSICompressor
 	}
 }
 
