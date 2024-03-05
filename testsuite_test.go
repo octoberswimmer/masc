@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -15,6 +16,8 @@ var _ = func() bool {
 	isTest = true
 	return true
 }()
+
+var mutex sync.Mutex
 
 // recoverStr runs f and returns the recovered panic as a string.
 func recoverStr(f func()) (s string) {
@@ -208,6 +211,8 @@ func (ts *testSuiteT) record(invocation string) string {
 
 // addCallbacks adds the first function in args to ts.callbacks[invocation], if there is one.
 func (ts *testSuiteT) addCallbacks(invocation string, args ...interface{}) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	for _, a := range args {
 		if fi, ok := a.(*jsFuncImpl); ok {
 			ts.callbacks[invocation] = fi.goFunc

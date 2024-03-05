@@ -2,7 +2,6 @@ package rumtew
 
 import (
 	"bytes"
-	"fmt"
 	"sync"
 	"time"
 )
@@ -70,15 +69,10 @@ func newNodeRenderer(node jsObject) renderer {
 
 // start starts the renderer.
 func (r *standardRenderer) start() {
-	fmt.Println("start called")
 	// Since the renderer can be restarted after a stop, we need to reset
 	// the done channel and its corresponding sync.Once.
 	r.once = sync.Once{}
 	r.rendered = false
-
-	fmt.Println("Starting listen")
-
-	fmt.Println("Returning from start")
 }
 
 // listen waits for ticks on the ticker, or a signal to stop the renderer.
@@ -114,10 +108,8 @@ func (r *standardRenderer) render(c Component, send func(Msg)) {
 	}
 	r.rendered = true
 	if !isZeroValue(r.rootNode) {
-		fmt.Printf("Rendering into rootNode: %+v\n", r.rootNode)
 		renderIntoNode("RenderIntoNode", r.rootNode, c, send)
 	} else {
-		fmt.Printf("Rendering into body\n")
 		RenderBody(c, send)
 	}
 }

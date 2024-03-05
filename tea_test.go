@@ -2,7 +2,6 @@ package rumtew
 
 import (
 	"context"
-	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -30,23 +29,19 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 		} else {
 			m.counter.Store(i.(int) + 1)
 		}
-
-	case KeyMsg:
-		return m, Quit
 	}
 
 	return m, nil
 }
 
 func (m *testModel) Render(send func(Msg)) ComponentOrHTML {
-	fmt.Println("Rendering testModel")
 	m.executed.Store(true)
 	go func() {
+		time.Sleep(20 * time.Millisecond)
 		for {
 			if len(m.testSuite.callbacks) == 0 {
-				time.Sleep(time.Millisecond)
+				time.Sleep(200 * time.Millisecond)
 			} else {
-				m.testSuite.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
 				m.testSuite.invokeCallbackRequestAnimationFrame(0)
 				return
 			}
@@ -89,7 +84,16 @@ func TestTeaWithFilter(t *testing.T) {
 }
 
 func testTeaWithFilter(t *testing.T, preventCount uint32) {
+	ts := testSuite(t)
+	defer ts.done()
+
+	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
+	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
+	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
+
 	m := &testModel{}
+	m.testSuite = ts
 	shutdowns := uint32(0)
 	p := NewProgram(m,
 		WithFilter(func(_ Model, msg Msg) Msg {
@@ -119,7 +123,16 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 }
 
 func TestTeaKill(t *testing.T) {
+	ts := testSuite(t)
+	defer ts.done()
+
+	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
+	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
+	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
+
 	m := &testModel{}
+	m.testSuite = ts
 	p := NewProgram(m)
 	go func() {
 		for {
@@ -139,7 +152,16 @@ func TestTeaKill(t *testing.T) {
 func TestTeaContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	ts := testSuite(t)
+	defer ts.done()
+
+	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
+	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
+	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
+
 	m := &testModel{}
+	m.testSuite = ts
 	p := NewProgram(m, WithContext(ctx))
 	go func() {
 		for {
@@ -161,7 +183,16 @@ func TestTeaBatchMsg(t *testing.T) {
 		return incrementMsg{}
 	}
 
+	ts := testSuite(t)
+	defer ts.done()
+
+	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
+	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
+	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
+
 	m := &testModel{}
+	m.testSuite = ts
 	p := NewProgram(m)
 	go func() {
 		p.Send(BatchMsg{inc, inc})
