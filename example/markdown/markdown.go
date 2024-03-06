@@ -3,50 +3,71 @@ package main
 import (
 	"bytes"
 
-	"github.com/hexops/vecty"
-	"github.com/hexops/vecty/elem"
-	"github.com/hexops/vecty/event"
+	"github.com/octoberswimmer/rumtew"
+	"github.com/octoberswimmer/rumtew/elem"
+	"github.com/octoberswimmer/rumtew/event"
 	"github.com/yuin/goldmark"
 )
 
 func main() {
-	vecty.SetTitle("Markdown Demo")
-	vecty.RenderBody(&PageView{
+	rumtew.SetTitle("Markdown Demo")
+	m := &PageView{
 		Input: `# Markdown Example
 
 This is a live editor, try editing the Markdown on the right of the page.
 `,
-	})
+	}
+	pgm := rumtew.NewProgram(m)
+	_, err := pgm.Run()
+	if err != nil {
+		panic(err)
+	}
+}
+
+type UpdateInput struct {
+	Input string
 }
 
 // PageView is our main page component.
 type PageView struct {
-	vecty.Core
+	rumtew.Core
 	Input string
 }
 
-// Render implements the vecty.Component interface.
-func (p *PageView) Render() vecty.ComponentOrHTML {
+func (p *PageView) Init() rumtew.Cmd {
+	return nil
+}
+
+func (p *PageView) Update(msg rumtew.Msg) (rumtew.Model, rumtew.Cmd) {
+	switch msg := msg.(type) {
+	case UpdateInput:
+		p.Input = msg.Input
+	}
+	return p, nil
+}
+
+// Render implements the rumtew.Component interface.
+func (p *PageView) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
 	return elem.Body(
 		// Display a textarea on the right-hand side of the page.
 		elem.Div(
-			vecty.Markup(
-				vecty.Style("float", "right"),
+			rumtew.Markup(
+				rumtew.Style("float", "right"),
 			),
 			elem.TextArea(
-				vecty.Markup(
-					vecty.Style("font-family", "monospace"),
-					vecty.Property("rows", 14),
-					vecty.Property("cols", 70),
+				rumtew.Markup(
+					rumtew.Style("font-family", "monospace"),
+					rumtew.Property("rows", 14),
+					rumtew.Property("cols", 70),
 
 					// When input is typed into the textarea, update the local
 					// component state and rerender.
-					event.Input(func(e *vecty.Event) {
-						p.Input = e.Target.Get("value").String()
-						vecty.Rerender(p)
+					event.Input(func(e *rumtew.Event) {
+						v := e.Target.Get("value").String()
+						send(UpdateInput{v})
 					}),
 				),
-				vecty.Text(p.Input), // initial textarea text.
+				rumtew.Text(p.Input), // initial textarea text.
 			),
 		),
 
@@ -58,12 +79,12 @@ func (p *PageView) Render() vecty.ComponentOrHTML {
 // Markdown is a simple component which renders the Input markdown as sanitized
 // HTML into a div.
 type Markdown struct {
-	vecty.Core
+	rumtew.Core
 	Input string `vecty:"prop"`
 }
 
-// Render implements the vecty.Component interface.
-func (m *Markdown) Render() vecty.ComponentOrHTML {
+// Render implements the rumtew.Component interface.
+func (m *Markdown) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
 	// Render the markdown input into HTML using Goldmark.
 	var buf bytes.Buffer
 	if err := goldmark.Convert([]byte(m.Input), &buf); err != nil {
@@ -75,8 +96,8 @@ func (m *Markdown) Render() vecty.ComponentOrHTML {
 
 	// Return the HTML.
 	return elem.Div(
-		vecty.Markup(
-			vecty.UnsafeHTML(buf.String()),
+		rumtew.Markup(
+			rumtew.UnsafeHTML(buf.String()),
 		),
 	)
 }

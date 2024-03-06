@@ -1,47 +1,48 @@
 package main
 
 import (
-	"encoding/json"
-	"syscall/js"
+	"github.com/octoberswimmer/rumtew"
+	"github.com/octoberswimmer/rumtew/elem"
 
-	"github.com/hexops/vecty"
-	"github.com/hexops/vecty/example/todomvc/actions"
-	"github.com/hexops/vecty/example/todomvc/components"
-	"github.com/hexops/vecty/example/todomvc/dispatcher"
-	"github.com/hexops/vecty/example/todomvc/store"
-	"github.com/hexops/vecty/example/todomvc/store/model"
+	"github.com/octoberswimmer/rumtew/example/todomvc/components"
 )
 
-func main() {
-	attachLocalStorage()
+type FocusCheck struct{}
 
-	vecty.SetTitle("GopherJS • TodoMVC")
-	vecty.AddStylesheet("https://rawgit.com/tastejs/todomvc-common/master/base.css")
-	vecty.AddStylesheet("https://rawgit.com/tastejs/todomvc-app-css/master/index.css")
-	p := &components.PageView{}
-	store.Listeners.Add(p, func() {
-		p.Items = store.Items
-		vecty.Rerender(p)
-	})
-	vecty.RenderBody(p)
+func main() {
+	rumtew.SetTitle("Hello rumtew!")
+	rumtew.AddStylesheet("https://rawgit.com/tastejs/todomvc-common/master/base.css")
+	rumtew.AddStylesheet("https://rawgit.com/tastejs/todomvc-app-css/master/index.css")
+
+	m := &Body{
+		todo: &components.PageView{},
+	}
+	pgm := rumtew.NewProgram(m)
+
+	_, err := pgm.Run()
+	if err != nil {
+		panic(err)
+	}
+
 }
 
-func attachLocalStorage() {
-	store.Listeners.Add(nil, func() {
-		data, err := json.Marshal(store.Items)
-		if err != nil {
-			println("failed to store items: " + err.Error())
-		}
-		js.Global().Get("localStorage").Set("items", string(data))
-	})
+type Body struct {
+	rumtew.Core
+	todo *components.PageView
+}
 
-	if data := js.Global().Get("localStorage").Get("items"); !data.IsUndefined() {
-		var items []*model.Item
-		if err := json.Unmarshal([]byte(data.String()), &items); err != nil {
-			println("failed to load items: " + err.Error())
-		}
-		dispatcher.Dispatch(&actions.ReplaceItems{
-			Items: items,
-		})
-	}
+func (b *Body) Init() rumtew.Cmd {
+	return b.todo.Init()
+}
+
+func (b *Body) Update(msg rumtew.Msg) (rumtew.Model, rumtew.Cmd) {
+	p, cmd := b.todo.Update(msg)
+	b.todo = p.(*components.PageView)
+	return b, cmd
+}
+
+func (b *Body) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
+	return elem.Body(
+		b.todo,
+	)
 }

@@ -58,7 +58,7 @@ func apply(m MarkupOrChild, h *HTML) {
 	case Component, *HTML, List, KeyedList:
 		h.children = append(h.children, m.(ComponentOrHTML))
 	default:
-		panic("vecty: internal error (unexpected MarkupOrChild type " + reflect.TypeOf(m).String() + ")")
+		panic("rumtew: internal error (unexpected MarkupOrChild type " + reflect.TypeOf(m).String() + "). Should implement Component?")
 	}
 }
 

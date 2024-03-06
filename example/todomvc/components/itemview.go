@@ -1,117 +1,145 @@
 package components
 
 import (
-	"github.com/hexops/vecty"
-	"github.com/hexops/vecty/elem"
-	"github.com/hexops/vecty/event"
-	"github.com/hexops/vecty/example/todomvc/actions"
-	"github.com/hexops/vecty/example/todomvc/dispatcher"
-	"github.com/hexops/vecty/example/todomvc/store/model"
-	"github.com/hexops/vecty/prop"
-	"github.com/hexops/vecty/style"
+	"fmt"
+
+	"github.com/octoberswimmer/rumtew"
+	"github.com/octoberswimmer/rumtew/elem"
+	"github.com/octoberswimmer/rumtew/event"
+	"github.com/octoberswimmer/rumtew/prop"
+	"github.com/octoberswimmer/rumtew/style"
 )
 
-// ItemView is a vecty.Component which represents a single item in the TODO
+// ItemView is a rumtew.Component which represents a single item in the TODO
 // list.
 type ItemView struct {
-	vecty.Core
+	rumtew.Core
 
-	Index     int         `vecty:"prop"`
-	Item      *model.Item `vecty:"prop"`
-	editing   bool
-	editTitle string
-	input     *vecty.HTML
+	Index     int    `vecty:"prop"`
+	Title     string `vecty:"prop"`
+	Completed bool   `vecty:"prop"`
+
+	Editing   bool   `vecty:"prop"`
+	EditTitle string `vecty:"prop"`
+	input     *rumtew.HTML
 }
 
-// Key implements the vecty.Keyer interface.
+// Key implements the rumtew.Keyer interface.
 func (p *ItemView) Key() interface{} {
 	return p.Index
 }
 
-func (p *ItemView) onDestroy(event *vecty.Event) {
-	dispatcher.Dispatch(&actions.DestroyItem{
-		Index: p.Index,
-	})
+type StartEdit struct {
+	Index int
 }
 
-func (p *ItemView) onToggleCompleted(event *vecty.Event) {
-	dispatcher.Dispatch(&actions.SetCompleted{
-		Index:     p.Index,
-		Completed: event.Target.Get("checked").Bool(),
-	})
+type Destroy struct {
+	Index int
 }
 
-func (p *ItemView) onStartEdit(event *vecty.Event) {
-	p.editing = true
-	p.editTitle = p.Item.Title
-	vecty.Rerender(p)
-	p.input.Node().Call("focus")
+type UpdateCompleted struct {
+	Index     int
+	Completed bool
 }
 
-func (p *ItemView) onEditInput(event *vecty.Event) {
-	p.editTitle = event.Target.Get("value").String()
-	vecty.Rerender(p)
+type StopEdit struct {
+	Index int
 }
 
-func (p *ItemView) onStopEdit(event *vecty.Event) {
-	p.editing = false
-	vecty.Rerender(p)
-	dispatcher.Dispatch(&actions.SetTitle{
-		Index: p.Index,
-		Title: p.editTitle,
-	})
+type EditInput struct {
+	Index int
+	Title string
 }
 
-// Render implements the vecty.Component interface.
-func (p *ItemView) Render() vecty.ComponentOrHTML {
+func (p *ItemView) onDestroy(send func(rumtew.Msg)) func(*rumtew.Event) {
+	return func(event *rumtew.Event) {
+		send(Destroy{p.Index})
+	}
+}
+
+func (p *ItemView) onToggleCompleted(send func(rumtew.Msg)) func(*rumtew.Event) {
+	return func(event *rumtew.Event) {
+		send(UpdateCompleted{
+			Index:     p.Index,
+			Completed: event.Target.Get("checked").Bool(),
+		})
+	}
+}
+
+func (p *ItemView) onStartEdit(send func(rumtew.Msg)) func(*rumtew.Event) {
+	return func(event *rumtew.Event) {
+		send(StartEdit{p.Index})
+	}
+}
+
+func (p *ItemView) onEditInput(send func(rumtew.Msg)) func(*rumtew.Event) {
+	return func(event *rumtew.Event) {
+		send(EditInput{p.Index, event.Target.Get("value").String()})
+	}
+}
+
+func (p *ItemView) onStopEdit(send func(rumtew.Msg)) func(*rumtew.Event) {
+	return func(event *rumtew.Event) {
+		send(StopEdit{p.Index})
+	}
+}
+
+// Render implements the rumtew.Component interface.
+func (p *ItemView) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
 	p.input = elem.Input(
-		vecty.Markup(
-			vecty.Class("edit"),
-			prop.Value(p.editTitle),
-			event.Input(p.onEditInput),
+		rumtew.Markup(
+			rumtew.Class("edit"),
+			rumtew.Attribute("id", fmt.Sprintf("input-%d", p.Index)),
+			prop.Value(p.EditTitle),
+			event.Input(p.onEditInput(send)),
 		),
 	)
 
 	return elem.ListItem(
-		vecty.Markup(
-			vecty.ClassMap{
-				"completed": p.Item.Completed,
-				"editing":   p.editing,
+		rumtew.Markup(
+			rumtew.ClassMap{
+				"completed": p.Completed,
+				"editing":   p.Editing,
 			},
 		),
 
 		elem.Div(
-			vecty.Markup(
-				vecty.Class("view"),
+			rumtew.Markup(
+				rumtew.Class("view"),
 			),
 
 			elem.Input(
-				vecty.Markup(
-					vecty.Class("toggle"),
+				rumtew.Markup(
+					rumtew.Class("toggle"),
 					prop.Type(prop.TypeCheckbox),
-					prop.Checked(p.Item.Completed),
-					event.Change(p.onToggleCompleted),
+					prop.Checked(p.Completed),
+					event.Change(p.onToggleCompleted(send)),
 				),
 			),
 			elem.Label(
-				vecty.Markup(
-					event.DoubleClick(p.onStartEdit),
+				rumtew.Markup(
+					event.DoubleClick(p.onStartEdit(send)),
 				),
-				vecty.Text(p.Item.Title),
+				rumtew.Text(p.Title),
 			),
 			elem.Button(
-				vecty.Markup(
-					vecty.Class("destroy"),
-					event.Click(p.onDestroy),
+				rumtew.Markup(
+					rumtew.Class("destroy"),
+					event.Click(p.onDestroy(send)),
 				),
 			),
 		),
 		elem.Form(
-			vecty.Markup(
+			rumtew.Markup(
 				style.Margin(style.Px(0)),
-				event.Submit(p.onStopEdit).PreventDefault(),
+				event.Submit(p.onStopEdit(send)).PreventDefault(),
 			),
 			p.input,
 		),
 	)
+}
+
+func (p *ItemView) Copy() rumtew.Component {
+	cpy := *p
+	return &cpy
 }

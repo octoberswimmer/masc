@@ -1,23 +1,36 @@
 package main
 
 import (
-	"github.com/hexops/vecty"
-	"github.com/hexops/vecty/elem"
+	"github.com/octoberswimmer/rumtew"
+	"github.com/octoberswimmer/rumtew/elem"
 )
 
 func main() {
-	vecty.SetTitle("Hello Vecty!")
-	vecty.RenderBody(&PageView{})
+	rumtew.SetTitle("Hello Vecty!")
+	m := &PageView{}
+	pgm := rumtew.NewProgram(m)
+	_, err := pgm.Run()
+	if err != nil {
+		panic(err)
+	}
 }
 
 // PageView is our main page component.
 type PageView struct {
-	vecty.Core
+	rumtew.Core
 }
 
-// Render implements the vecty.Component interface.
-func (p *PageView) Render() vecty.ComponentOrHTML {
+func (p *PageView) Init() rumtew.Cmd {
+	return nil
+}
+
+func (p *PageView) Update(msg rumtew.Msg) (rumtew.Model, rumtew.Cmd) {
+	return p, nil
+}
+
+// Render implements the rumtew.Component interface.
+func (p *PageView) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
 	return elem.Body(
-		vecty.Text("Hello Vecty!"),
+		rumtew.Text("Hello Vecty!"),
 	)
 }

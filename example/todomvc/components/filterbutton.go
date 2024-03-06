@@ -1,42 +1,44 @@
 package components
 
 import (
-	"github.com/hexops/vecty"
-	"github.com/hexops/vecty/elem"
-	"github.com/hexops/vecty/event"
-	"github.com/hexops/vecty/example/todomvc/actions"
-	"github.com/hexops/vecty/example/todomvc/dispatcher"
-	"github.com/hexops/vecty/example/todomvc/store"
-	"github.com/hexops/vecty/example/todomvc/store/model"
-	"github.com/hexops/vecty/prop"
+	"github.com/octoberswimmer/rumtew"
+	"github.com/octoberswimmer/rumtew/elem"
+	"github.com/octoberswimmer/rumtew/event"
+	"github.com/octoberswimmer/rumtew/prop"
 )
 
-// FilterButton is a vecty.Component which allows the user to select a filter
+// FilterButton is a rumtew.Component which allows the user to select a filter
 // state.
 type FilterButton struct {
-	vecty.Core
+	rumtew.Core
 
-	Label  string            `vecty:"prop"`
-	Filter model.FilterState `vecty:"prop"`
+	Label        string      `vecty:"prop"`
+	Filter       FilterState `vecty:"prop"`
+	ActiveFilter bool
 }
 
-func (b *FilterButton) onClick(event *vecty.Event) {
-	dispatcher.Dispatch(&actions.SetFilter{
-		Filter: b.Filter,
-	})
+func (b *FilterButton) onClick(send func(rumtew.Msg)) func(*rumtew.Event) {
+	return func(event *rumtew.Event) {
+		send(SetFilter{Filter: b.Filter})
+	}
 }
 
 // Render implements the vecty.Component interface.
-func (b *FilterButton) Render() vecty.ComponentOrHTML {
+func (b *FilterButton) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
 	return elem.ListItem(
 		elem.Anchor(
-			vecty.Markup(
-				vecty.MarkupIf(store.Filter == b.Filter, vecty.Class("selected")),
+			rumtew.Markup(
+				rumtew.MarkupIf(b.ActiveFilter, rumtew.Class("selected")),
 				prop.Href("#"),
-				event.Click(b.onClick).PreventDefault(),
+				event.Click(b.onClick(send)).PreventDefault(),
 			),
 
-			vecty.Text(b.Label),
+			rumtew.Text(b.Label),
 		),
 	)
+}
+
+func (b *FilterButton) Copy() rumtew.Component {
+	cpy := *b
+	return &cpy
 }
