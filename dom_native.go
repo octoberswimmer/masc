@@ -41,6 +41,12 @@ func RenderIntoNode(node SyscallJSValue, c Component, send func(Msg)) error {
 	return renderIntoNode("RenderIntoNode", node, c, send)
 }
 
+func RenderTo(rootNode SyscallJSValue) ProgramOption {
+	return func(p *Program) {
+		p.renderer = newNodeRenderer(rootNode)
+	}
+}
+
 func toLower(s string) string {
 	return strings.ToLower(s)
 }

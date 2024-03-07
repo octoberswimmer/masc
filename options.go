@@ -70,12 +70,6 @@ func WithMouseCellMotion() ProgramOption {
 	}
 }
 
-func RenderTo(rootNode jsObject) ProgramOption {
-	return func(p *Program) {
-		p.renderer = newNodeRenderer(rootNode)
-	}
-}
-
 // WithoutRenderer disables the renderer. When this is set output and log
 // statements will be plainly sent to stdout (or another output if one is set)
 // without any rendering and redrawing logic. In other words, printing and
