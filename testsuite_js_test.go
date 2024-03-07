@@ -1,6 +1,6 @@
 // +build js
 
-package rumtew
+package masc
 
 import "syscall/js"
 

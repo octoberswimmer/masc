@@ -1,4 +1,4 @@
-package rumtew
+package masc
 
 import "reflect"
 
@@ -58,7 +58,7 @@ func apply(m MarkupOrChild, h *HTML) {
 	case Component, *HTML, List, KeyedList:
 		h.children = append(h.children, m.(ComponentOrHTML))
 	default:
-		panic("rumtew: internal error (unexpected MarkupOrChild type " + reflect.TypeOf(m).String() + "). Should implement Component?")
+		panic("masc: internal error (unexpected MarkupOrChild type " + reflect.TypeOf(m).String() + "). Should implement Component?")
 	}
 }
 
@@ -101,7 +101,7 @@ func ElementKey(key interface{}) Applyer {
 // To set style, use style package or Style. Property panics if key is "style".
 func Property(key string, value interface{}) Applyer {
 	if key == "style" {
-		panic(`vecty: Property called with key "style"; style package or Style should be used instead`)
+		panic(`masc: Property called with key "style"; style package or Style should be used instead`)
 	}
 	return markupFunc(func(h *HTML) {
 		if h.properties == nil {
@@ -156,7 +156,7 @@ func Class(class ...string) Applyer {
 func mustValidateClassNames(class []string) {
 	for _, name := range class {
 		if containsSpace(name) {
-			panic(`vecty: invalid argument to vecty.Class "` + name + `" (string may not contain spaces)`)
+			panic(`masc: invalid argument to masc.Class "` + name + `" (string may not contain spaces)`)
 		}
 	}
 }
@@ -247,7 +247,7 @@ func MarkupIf(cond bool, markup ...Applyer) Applyer {
 // user, for example, it would create a cross-site-scripting (XSS) exploit in
 // the application.
 //
-// The returned Applyer can only be applied to HTML, not vecty.Text, or else a
+// The returned Applyer can only be applied to HTML, not masc.Text, or else a
 // panic will occur.
 func UnsafeHTML(html string) Applyer {
 	return markupFunc(func(h *HTML) {

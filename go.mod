@@ -1,4 +1,4 @@
-module github.com/octoberswimmer/rumtew
+module github.com/octoberswimmer/masc
 
 go 1.18
 

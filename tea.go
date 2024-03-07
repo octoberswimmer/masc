@@ -4,10 +4,10 @@
 // both. It's been battle-tested in several large projects and is
 // production-ready.
 //
-// A tutorial is available at https://github.com/octoberswimmer/rumtew/tree/master/tutorials
+// A tutorial is available at https://github.com/octoberswimmer/masc/tree/master/tutorials
 //
-// Example programs can be found at https://github.com/octoberswimmer/rumtew/tree/master/examples
-package rumtew
+// Example programs can be found at https://github.com/octoberswimmer/masc/tree/master/examples
+package masc
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package rumtew
+package masc
 
 import "testing"
 

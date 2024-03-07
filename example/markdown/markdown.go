@@ -3,21 +3,21 @@ package main
 import (
 	"bytes"
 
-	"github.com/octoberswimmer/rumtew"
-	"github.com/octoberswimmer/rumtew/elem"
-	"github.com/octoberswimmer/rumtew/event"
+	"github.com/octoberswimmer/masc"
+	"github.com/octoberswimmer/masc/elem"
+	"github.com/octoberswimmer/masc/event"
 	"github.com/yuin/goldmark"
 )
 
 func main() {
-	rumtew.SetTitle("Markdown Demo")
+	masc.SetTitle("Markdown Demo")
 	m := &PageView{
 		Input: `# Markdown Example
 
 This is a live editor, try editing the Markdown on the right of the page.
 `,
 	}
-	pgm := rumtew.NewProgram(m)
+	pgm := masc.NewProgram(m)
 	_, err := pgm.Run()
 	if err != nil {
 		panic(err)
@@ -30,15 +30,15 @@ type UpdateInput struct {
 
 // PageView is our main page component.
 type PageView struct {
-	rumtew.Core
+	masc.Core
 	Input string
 }
 
-func (p *PageView) Init() rumtew.Cmd {
+func (p *PageView) Init() masc.Cmd {
 	return nil
 }
 
-func (p *PageView) Update(msg rumtew.Msg) (rumtew.Model, rumtew.Cmd) {
+func (p *PageView) Update(msg masc.Msg) (masc.Model, masc.Cmd) {
 	switch msg := msg.(type) {
 	case UpdateInput:
 		p.Input = msg.Input
@@ -46,28 +46,28 @@ func (p *PageView) Update(msg rumtew.Msg) (rumtew.Model, rumtew.Cmd) {
 	return p, nil
 }
 
-// Render implements the rumtew.Component interface.
-func (p *PageView) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
+// Render implements the masc.Component interface.
+func (p *PageView) Render(send func(masc.Msg)) masc.ComponentOrHTML {
 	return elem.Body(
 		// Display a textarea on the right-hand side of the page.
 		elem.Div(
-			rumtew.Markup(
-				rumtew.Style("float", "right"),
+			masc.Markup(
+				masc.Style("float", "right"),
 			),
 			elem.TextArea(
-				rumtew.Markup(
-					rumtew.Style("font-family", "monospace"),
-					rumtew.Property("rows", 14),
-					rumtew.Property("cols", 70),
+				masc.Markup(
+					masc.Style("font-family", "monospace"),
+					masc.Property("rows", 14),
+					masc.Property("cols", 70),
 
 					// When input is typed into the textarea, update the local
 					// component state and rerender.
-					event.Input(func(e *rumtew.Event) {
+					event.Input(func(e *masc.Event) {
 						v := e.Target.Get("value").String()
 						send(UpdateInput{v})
 					}),
 				),
-				rumtew.Text(p.Input), // initial textarea text.
+				masc.Text(p.Input), // initial textarea text.
 			),
 		),
 
@@ -79,12 +79,12 @@ func (p *PageView) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
 // Markdown is a simple component which renders the Input markdown as sanitized
 // HTML into a div.
 type Markdown struct {
-	rumtew.Core
-	Input string `vecty:"prop"`
+	masc.Core
+	Input string `masc:"prop"`
 }
 
-// Render implements the rumtew.Component interface.
-func (m *Markdown) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
+// Render implements the masc.Component interface.
+func (m *Markdown) Render(send func(masc.Msg)) masc.ComponentOrHTML {
 	// Render the markdown input into HTML using Goldmark.
 	var buf bytes.Buffer
 	if err := goldmark.Convert([]byte(m.Input), &buf); err != nil {
@@ -96,8 +96,8 @@ func (m *Markdown) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
 
 	// Return the HTML.
 	return elem.Div(
-		rumtew.Markup(
-			rumtew.UnsafeHTML(buf.String()),
+		masc.Markup(
+			masc.UnsafeHTML(buf.String()),
 		),
 	)
 }

@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/octoberswimmer/rumtew"
-	"github.com/octoberswimmer/rumtew/elem"
+	"github.com/octoberswimmer/masc"
+	"github.com/octoberswimmer/masc/elem"
 )
 
 func main() {
-	rumtew.SetTitle("Hello Vecty!")
+	masc.SetTitle("Hello Vecty!")
 	m := &PageView{}
-	pgm := rumtew.NewProgram(m)
+	pgm := masc.NewProgram(m)
 	_, err := pgm.Run()
 	if err != nil {
 		panic(err)
@@ -17,20 +17,20 @@ func main() {
 
 // PageView is our main page component.
 type PageView struct {
-	rumtew.Core
+	masc.Core
 }
 
-func (p *PageView) Init() rumtew.Cmd {
+func (p *PageView) Init() masc.Cmd {
 	return nil
 }
 
-func (p *PageView) Update(msg rumtew.Msg) (rumtew.Model, rumtew.Cmd) {
+func (p *PageView) Update(msg masc.Msg) (masc.Model, masc.Cmd) {
 	return p, nil
 }
 
-// Render implements the rumtew.Component interface.
-func (p *PageView) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
+// Render implements the masc.Component interface.
+func (p *PageView) Render(send func(masc.Msg)) masc.ComponentOrHTML {
 	return elem.Body(
-		rumtew.Text("Hello Vecty!"),
+		masc.Text("Hello Vecty!"),
 	)
 }

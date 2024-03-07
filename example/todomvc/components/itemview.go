@@ -3,28 +3,28 @@ package components
 import (
 	"fmt"
 
-	"github.com/octoberswimmer/rumtew"
-	"github.com/octoberswimmer/rumtew/elem"
-	"github.com/octoberswimmer/rumtew/event"
-	"github.com/octoberswimmer/rumtew/prop"
-	"github.com/octoberswimmer/rumtew/style"
+	"github.com/octoberswimmer/masc"
+	"github.com/octoberswimmer/masc/elem"
+	"github.com/octoberswimmer/masc/event"
+	"github.com/octoberswimmer/masc/prop"
+	"github.com/octoberswimmer/masc/style"
 )
 
-// ItemView is a rumtew.Component which represents a single item in the TODO
+// ItemView is a masc.Component which represents a single item in the TODO
 // list.
 type ItemView struct {
-	rumtew.Core
+	masc.Core
 
-	Index     int    `vecty:"prop"`
-	Title     string `vecty:"prop"`
-	Completed bool   `vecty:"prop"`
+	Index     int    `masc:"prop"`
+	Title     string `masc:"prop"`
+	Completed bool   `masc:"prop"`
 
-	Editing   bool   `vecty:"prop"`
-	EditTitle string `vecty:"prop"`
-	input     *rumtew.HTML
+	Editing   bool   `masc:"prop"`
+	EditTitle string `masc:"prop"`
+	input     *masc.HTML
 }
 
-// Key implements the rumtew.Keyer interface.
+// Key implements the masc.Keyer interface.
 func (p *ItemView) Key() interface{} {
 	return p.Index
 }
@@ -51,14 +51,14 @@ type EditInput struct {
 	Title string
 }
 
-func (p *ItemView) onDestroy(send func(rumtew.Msg)) func(*rumtew.Event) {
-	return func(event *rumtew.Event) {
+func (p *ItemView) onDestroy(send func(masc.Msg)) func(*masc.Event) {
+	return func(event *masc.Event) {
 		send(Destroy{p.Index})
 	}
 }
 
-func (p *ItemView) onToggleCompleted(send func(rumtew.Msg)) func(*rumtew.Event) {
-	return func(event *rumtew.Event) {
+func (p *ItemView) onToggleCompleted(send func(masc.Msg)) func(*masc.Event) {
+	return func(event *masc.Event) {
 		send(UpdateCompleted{
 			Index:     p.Index,
 			Completed: event.Target.Get("checked").Bool(),
@@ -66,71 +66,71 @@ func (p *ItemView) onToggleCompleted(send func(rumtew.Msg)) func(*rumtew.Event) 
 	}
 }
 
-func (p *ItemView) onStartEdit(send func(rumtew.Msg)) func(*rumtew.Event) {
-	return func(event *rumtew.Event) {
+func (p *ItemView) onStartEdit(send func(masc.Msg)) func(*masc.Event) {
+	return func(event *masc.Event) {
 		send(StartEdit{p.Index})
 	}
 }
 
-func (p *ItemView) onEditInput(send func(rumtew.Msg)) func(*rumtew.Event) {
-	return func(event *rumtew.Event) {
+func (p *ItemView) onEditInput(send func(masc.Msg)) func(*masc.Event) {
+	return func(event *masc.Event) {
 		send(EditInput{p.Index, event.Target.Get("value").String()})
 	}
 }
 
-func (p *ItemView) onStopEdit(send func(rumtew.Msg)) func(*rumtew.Event) {
-	return func(event *rumtew.Event) {
+func (p *ItemView) onStopEdit(send func(masc.Msg)) func(*masc.Event) {
+	return func(event *masc.Event) {
 		send(StopEdit{p.Index})
 	}
 }
 
-// Render implements the rumtew.Component interface.
-func (p *ItemView) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
+// Render implements the masc.Component interface.
+func (p *ItemView) Render(send func(masc.Msg)) masc.ComponentOrHTML {
 	p.input = elem.Input(
-		rumtew.Markup(
-			rumtew.Class("edit"),
-			rumtew.Attribute("id", fmt.Sprintf("input-%d", p.Index)),
+		masc.Markup(
+			masc.Class("edit"),
+			masc.Attribute("id", fmt.Sprintf("input-%d", p.Index)),
 			prop.Value(p.EditTitle),
 			event.Input(p.onEditInput(send)),
 		),
 	)
 
 	return elem.ListItem(
-		rumtew.Markup(
-			rumtew.ClassMap{
+		masc.Markup(
+			masc.ClassMap{
 				"completed": p.Completed,
 				"editing":   p.Editing,
 			},
 		),
 
 		elem.Div(
-			rumtew.Markup(
-				rumtew.Class("view"),
+			masc.Markup(
+				masc.Class("view"),
 			),
 
 			elem.Input(
-				rumtew.Markup(
-					rumtew.Class("toggle"),
+				masc.Markup(
+					masc.Class("toggle"),
 					prop.Type(prop.TypeCheckbox),
 					prop.Checked(p.Completed),
 					event.Change(p.onToggleCompleted(send)),
 				),
 			),
 			elem.Label(
-				rumtew.Markup(
+				masc.Markup(
 					event.DoubleClick(p.onStartEdit(send)),
 				),
-				rumtew.Text(p.Title),
+				masc.Text(p.Title),
 			),
 			elem.Button(
-				rumtew.Markup(
-					rumtew.Class("destroy"),
+				masc.Markup(
+					masc.Class("destroy"),
 					event.Click(p.onDestroy(send)),
 				),
 			),
 		),
 		elem.Form(
-			rumtew.Markup(
+			masc.Markup(
 				style.Margin(style.Px(0)),
 				event.Submit(p.onStopEdit(send)).PreventDefault(),
 			),
@@ -139,7 +139,7 @@ func (p *ItemView) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
 	)
 }
 
-func (p *ItemView) Copy() rumtew.Component {
+func (p *ItemView) Copy() masc.Component {
 	cpy := *p
 	return &cpy
 }

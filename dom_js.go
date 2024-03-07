@@ -1,7 +1,7 @@
 //go:build js
 // +build js
 
-package rumtew
+package masc
 
 import "syscall/js"
 
@@ -17,7 +17,7 @@ type Event struct {
 // the associated component's Mounter interface would be invoked.
 func (h *HTML) Node() js.Value {
 	if h.node == nil {
-		panic("vecty: cannot call (*HTML).Node() before DOM node creation / component mount")
+		panic("masc: cannot call (*HTML).Node() before DOM node creation / component mount")
 	}
 	return h.node.(wrappedObject).j
 }

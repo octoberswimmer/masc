@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/octoberswimmer/rumtew"
+	tea "github.com/octoberswimmer/masc"
 )
 
 type model struct {

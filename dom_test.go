@@ -1,4 +1,4 @@
-package rumtew
+package masc
 
 import (
 	"fmt"
@@ -345,7 +345,7 @@ func TestHTML_reconcile_nil(t *testing.T) {
 			h := &HTML{text: "hello", tag: "div"}
 			h.reconcile(nil, send)
 		})
-		want := "vecty: internal error (only one of HTML.tag or HTML.text may be set)"
+		want := "masc: internal error (only one of HTML.tag or HTML.text may be set)"
 		if got != want {
 			t.Fatalf("got panic %q want %q", got, want)
 		}
@@ -355,7 +355,7 @@ func TestHTML_reconcile_nil(t *testing.T) {
 			h := &HTML{text: "hello", innerHTML: "foobar"}
 			h.reconcile(nil, send)
 		})
-		want := "vecty: only HTML may have UnsafeHTML attribute"
+		want := "masc: only HTML may have UnsafeHTML attribute"
 		if got != want {
 			t.Fatalf("got panic %q want %q", got, want)
 		}
@@ -529,7 +529,7 @@ func TestRerender_nil(t *testing.T) {
 		}()
 		rerender(nil, send)
 	}()
-	expected := "vecty: Rerender illegally called with a nil Component argument"
+	expected := "masc: Rerender illegally called with a nil Component argument"
 	if gotPanic != expected {
 		t.Fatalf("got panic %q expected %q", gotPanic, expected)
 	}
@@ -551,7 +551,7 @@ func TestRerender_no_prevRender(t *testing.T) {
 			},
 		}, send)
 	})
-	want := "vecty: Rerender invoked on Component that has never been rendered"
+	want := "masc: Rerender invoked on Component that has never been rendered"
 	if got != want {
 		t.Fatalf("got panic %q expected %q", got, want)
 	}
@@ -971,17 +971,17 @@ func TestRenderBody_ExpectsBody(t *testing.T) {
 		{
 			name:      "text",
 			render:    Text("Hello world!"),
-			wantPanic: "vecty: RenderBody: expected Component.Render to return a \"body\", found \"\"", // TODO(slimsag): error message bug
+			wantPanic: "masc: RenderBody: expected Component.Render to return a \"body\", found \"\"", // TODO(slimsag): error message bug
 		},
 		{
 			name:      "div",
 			render:    Tag("div"),
-			wantPanic: "vecty: RenderBody: expected Component.Render to return a \"body\", found \"div\"",
+			wantPanic: "masc: RenderBody: expected Component.Render to return a \"body\", found \"div\"",
 		},
 		{
 			name:      "nil",
 			render:    nil,
-			wantPanic: "vecty: RenderBody: expected Component.Render to return a \"body\", found \"noscript\"",
+			wantPanic: "masc: RenderBody: expected Component.Render to return a \"body\", found \"noscript\"",
 		},
 	}
 	for _, c := range cases {
@@ -1035,7 +1035,7 @@ func TestRenderBody_RenderSkipper_Skip(t *testing.T) {
 	got := recoverStr(func() {
 		RenderBody(comp, send)
 	})
-	want := "vecty: RenderBody: Component.SkipRender illegally returned true"
+	want := "masc: RenderBody: Component.SkipRender illegally returned true"
 	if got != want {
 		t.Fatalf("got panic %q want %q", got, want)
 	}

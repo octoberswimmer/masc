@@ -1,23 +1,23 @@
 package main
 
 import (
-	"github.com/octoberswimmer/rumtew"
-	"github.com/octoberswimmer/rumtew/elem"
+	"github.com/octoberswimmer/masc"
+	"github.com/octoberswimmer/masc/elem"
 
-	"github.com/octoberswimmer/rumtew/example/todomvc/components"
+	"github.com/octoberswimmer/masc/example/todomvc/components"
 )
 
 type FocusCheck struct{}
 
 func main() {
-	rumtew.SetTitle("Hello rumtew!")
-	rumtew.AddStylesheet("https://rawgit.com/tastejs/todomvc-common/master/base.css")
-	rumtew.AddStylesheet("https://rawgit.com/tastejs/todomvc-app-css/master/index.css")
+	masc.SetTitle("Hello masc!")
+	masc.AddStylesheet("https://rawgit.com/tastejs/todomvc-common/master/base.css")
+	masc.AddStylesheet("https://rawgit.com/tastejs/todomvc-app-css/master/index.css")
 
 	m := &Body{
 		todo: &components.PageView{},
 	}
-	pgm := rumtew.NewProgram(m)
+	pgm := masc.NewProgram(m)
 
 	_, err := pgm.Run()
 	if err != nil {
@@ -27,21 +27,21 @@ func main() {
 }
 
 type Body struct {
-	rumtew.Core
+	masc.Core
 	todo *components.PageView
 }
 
-func (b *Body) Init() rumtew.Cmd {
+func (b *Body) Init() masc.Cmd {
 	return b.todo.Init()
 }
 
-func (b *Body) Update(msg rumtew.Msg) (rumtew.Model, rumtew.Cmd) {
+func (b *Body) Update(msg masc.Msg) (masc.Model, masc.Cmd) {
 	p, cmd := b.todo.Update(msg)
 	b.todo = p.(*components.PageView)
 	return b, cmd
 }
 
-func (b *Body) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
+func (b *Body) Render(send func(masc.Msg)) masc.ComponentOrHTML {
 	return elem.Body(
 		b.todo,
 	)

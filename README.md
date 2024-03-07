@@ -2,9 +2,9 @@
 
 <p>
     <img src="https://stuff.charm.sh/bubbletea/bubbletea-github-header-simple.png" width="313" alt="Bubble Tea Title Treatment"><br>
-    <a href="https://github.com/octoberswimmer/rumtew/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
-    <a href="https://pkg.go.dev/github.com/octoberswimmer/rumtew?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
-    <a href="https://github.com/octoberswimmer/rumtew/actions"><img src="https://github.com/octoberswimmer/rumtew/workflows/build/badge.svg" alt="Build Status"></a>
+    <a href="https://github.com/octoberswimmer/masc/releases"><img src="https://img.shields.io/github/release/charmbracelet/bubbletea.svg" alt="Latest Release"></a>
+    <a href="https://pkg.go.dev/github.com/octoberswimmer/masc?tab=doc"><img src="https://godoc.org/github.com/golang/gddo?status.svg" alt="GoDoc"></a>
+    <a href="https://github.com/octoberswimmer/masc/actions"><img src="https://github.com/octoberswimmer/masc/workflows/build/badge.svg" alt="Build Status"></a>
 </p>
 
 The fun, functional and stateful way to build terminal apps. A Go framework
@@ -48,7 +48,7 @@ By the way, the non-annotated source code for this program is available
 [on GitHub][tut-source].
 
 [elm]: https://guide.elm-lang.org/architecture/
-[tut-source]:https://github.com/octoberswimmer/rumtew/tree/master/tutorials/basics
+[tut-source]:https://github.com/octoberswimmer/masc/tree/master/tutorials/basics
 
 ### Enough! Let's get to it.
 
@@ -64,7 +64,7 @@ import (
     "fmt"
     "os"
 
-    tea "github.com/octoberswimmer/rumtew"
+    tea "github.com/octoberswimmer/masc"
 )
 ```
 
@@ -253,9 +253,9 @@ look at the [Command Tutorial][cmd]. It's pretty simple.
 There are also several [Bubble Tea examples][examples] available and, of course,
 there are [Go Docs][docs].
 
-[cmd]: http://github.com/octoberswimmer/rumtew/tree/master/tutorials/commands/
-[examples]: http://github.com/octoberswimmer/rumtew/tree/master/examples
-[docs]: https://pkg.go.dev/github.com/octoberswimmer/rumtew?tab=doc
+[cmd]: http://github.com/octoberswimmer/masc/tree/master/tutorials/commands/
+[examples]: http://github.com/octoberswimmer/masc/tree/master/examples
+[docs]: https://pkg.go.dev/github.com/octoberswimmer/masc?tab=doc
 
 ## Debugging
 
@@ -410,7 +410,7 @@ of days past.
 
 ## License
 
-[MIT](https://github.com/octoberswimmer/rumtew/raw/master/LICENSE)
+[MIT](https://github.com/octoberswimmer/masc/raw/master/LICENSE)
 
 ***
 

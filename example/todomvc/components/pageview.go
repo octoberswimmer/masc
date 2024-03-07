@@ -6,18 +6,18 @@ import (
 	"strconv"
 	"syscall/js"
 
-	"github.com/octoberswimmer/rumtew"
-	"github.com/octoberswimmer/rumtew/elem"
-	"github.com/octoberswimmer/rumtew/event"
-	"github.com/octoberswimmer/rumtew/prop"
-	"github.com/octoberswimmer/rumtew/style"
+	"github.com/octoberswimmer/masc"
+	"github.com/octoberswimmer/masc/elem"
+	"github.com/octoberswimmer/masc/event"
+	"github.com/octoberswimmer/masc/prop"
+	"github.com/octoberswimmer/masc/style"
 )
 
-// PageView is a rumtew.Component which represents the entire page.
+// PageView is a masc.Component which represents the entire page.
 type PageView struct {
-	rumtew.Core
+	masc.Core
 
-	Items        []*Item `vecty:"prop"`
+	Items        []*Item `masc:"prop"`
 	newItemTitle string
 
 	// Filter represents the active viewing filter for items.
@@ -48,14 +48,14 @@ const (
 	Completed
 )
 
-func (m *PageView) Init() rumtew.Cmd {
+func (m *PageView) Init() masc.Cmd {
 	fmt.Println("Initializing PageView")
 	return attachLocalStorage
 }
 
-func (m *PageView) Update(msg rumtew.Msg) (rumtew.Model, rumtew.Cmd) {
+func (m *PageView) Update(msg masc.Msg) (masc.Model, masc.Cmd) {
 	var (
-		cmds []rumtew.Cmd
+		cmds []masc.Cmd
 	)
 	switch msg := msg.(type) {
 	case ItemList:
@@ -100,10 +100,10 @@ func (m *PageView) Update(msg rumtew.Msg) (rumtew.Model, rumtew.Cmd) {
 		m.Items = append(m.Items[:msg.Index], m.Items[msg.Index+1:]...)
 		cmds = append(cmds, m.updateLocalStorage)
 	}
-	return m, rumtew.Batch(cmds...)
+	return m, masc.Batch(cmds...)
 }
 
-func (m *PageView) updateLocalStorage() rumtew.Msg {
+func (m *PageView) updateLocalStorage() masc.Msg {
 	fmt.Printf("Marshalling %+v", m.Items)
 	data, err := json.Marshal(m.Items)
 	if err != nil {
@@ -114,7 +114,7 @@ func (m *PageView) updateLocalStorage() rumtew.Msg {
 	return nil
 }
 
-func attachLocalStorage() rumtew.Msg {
+func attachLocalStorage() masc.Msg {
 	if data := js.Global().Get("localStorage").Get("items"); !data.IsUndefined() {
 		fmt.Println("Got items from localStorage", data.String())
 		var items ItemList
@@ -126,43 +126,43 @@ func attachLocalStorage() rumtew.Msg {
 	return nil
 }
 
-func (p *PageView) onNewItemTitleInput(send func(rumtew.Msg)) func(*rumtew.Event) {
-	return func(event *rumtew.Event) {
+func (p *PageView) onNewItemTitleInput(send func(masc.Msg)) func(*masc.Event) {
+	return func(event *masc.Event) {
 		// p.newItemTitle = event.Target.Get("value").String()
 		send(NewItemTitleMsg{Title: event.Target.Get("value").String()})
 	}
 }
 
-func (p *PageView) onAdd(send func(rumtew.Msg)) func(*rumtew.Event) {
-	return func(event *rumtew.Event) {
+func (p *PageView) onAdd(send func(masc.Msg)) func(*masc.Event) {
+	return func(event *masc.Event) {
 		send(AddItemMsg{})
 	}
 }
 
-func (p *PageView) onClearCompleted(send func(rumtew.Msg)) func(*rumtew.Event) {
-	return func(event *rumtew.Event) {
+func (p *PageView) onClearCompleted(send func(masc.Msg)) func(*masc.Event) {
+	return func(event *masc.Event) {
 		send(ClearCompleted{})
 	}
 }
 
-func (p *PageView) onToggleAllCompleted(send func(rumtew.Msg)) func(*rumtew.Event) {
-	return func(event *rumtew.Event) {
+func (p *PageView) onToggleAllCompleted(send func(masc.Msg)) func(*masc.Event) {
+	return func(event *masc.Event) {
 		send(SetAllCompleted{
 			Completed: event.Target.Get("checked").Bool(),
 		})
 	}
 }
 
-// Render implements the rumtew.Component interface.
-func (p *PageView) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
+// Render implements the masc.Component interface.
+func (p *PageView) Render(send func(masc.Msg)) masc.ComponentOrHTML {
 	return elem.Div(
 		elem.Section(
-			rumtew.Markup(
-				rumtew.Class("todoapp"),
+			masc.Markup(
+				masc.Class("todoapp"),
 			),
 
 			p.renderHeader(send),
-			rumtew.If(len(p.Items) > 0,
+			masc.If(len(p.Items) > 0,
 				p.renderItemList(send),
 				p.renderFooter(send),
 			),
@@ -172,24 +172,24 @@ func (p *PageView) Render(send func(rumtew.Msg)) rumtew.ComponentOrHTML {
 	)
 }
 
-func (p *PageView) renderHeader(send func(rumtew.Msg)) *rumtew.HTML {
+func (p *PageView) renderHeader(send func(masc.Msg)) *masc.HTML {
 	return elem.Header(
-		rumtew.Markup(
-			rumtew.Class("header"),
+		masc.Markup(
+			masc.Class("header"),
 		),
 
 		elem.Heading1(
-			rumtew.Text("todos"),
+			masc.Text("todos"),
 		),
 		elem.Form(
-			rumtew.Markup(
+			masc.Markup(
 				style.Margin(style.Px(0)),
 				event.Submit(p.onAdd(send)).PreventDefault(),
 			),
 
 			elem.Input(
-				rumtew.Markup(
-					rumtew.Class("new-todo"),
+				masc.Markup(
+					masc.Class("new-todo"),
 					prop.Placeholder("What needs to be done?"),
 					prop.Autofocus(true),
 					prop.Value(p.newItemTitle),
@@ -220,7 +220,7 @@ func (p *PageView) count(completed bool) int {
 	return count
 }
 
-func (p *PageView) renderFooter(send func(rumtew.Msg)) *rumtew.HTML {
+func (p *PageView) renderFooter(send func(masc.Msg)) *masc.HTML {
 	count := p.ActiveItemCount()
 	itemsLeftText := " items left"
 	if count == 1 {
@@ -228,76 +228,76 @@ func (p *PageView) renderFooter(send func(rumtew.Msg)) *rumtew.HTML {
 	}
 
 	return elem.Footer(
-		rumtew.Markup(
-			rumtew.Class("footer"),
+		masc.Markup(
+			masc.Class("footer"),
 		),
 
 		elem.Span(
-			rumtew.Markup(
-				rumtew.Class("todo-count"),
+			masc.Markup(
+				masc.Class("todo-count"),
 			),
 
 			elem.Strong(
-				rumtew.Text(strconv.Itoa(count)),
+				masc.Text(strconv.Itoa(count)),
 			),
-			rumtew.Text(itemsLeftText),
+			masc.Text(itemsLeftText),
 		),
 
 		elem.UnorderedList(
-			rumtew.Markup(
-				rumtew.Class("filters"),
+			masc.Markup(
+				masc.Class("filters"),
 			),
 			&FilterButton{Label: "All", Filter: All, ActiveFilter: p.Filter == All},
-			rumtew.Text(" "),
+			masc.Text(" "),
 			&FilterButton{Label: "Active", Filter: Active, ActiveFilter: p.Filter == Active},
-			rumtew.Text(" "),
+			masc.Text(" "),
 			&FilterButton{Label: "Completed", Filter: Completed, ActiveFilter: p.Filter == Completed},
 		),
 
-		rumtew.If(p.CompletedItemCount() > 0,
+		masc.If(p.CompletedItemCount() > 0,
 			elem.Button(
-				rumtew.Markup(
-					rumtew.Class("clear-completed"),
+				masc.Markup(
+					masc.Class("clear-completed"),
 					event.Click(p.onClearCompleted(send)),
 				),
-				rumtew.Text("Clear completed ("+strconv.Itoa(p.CompletedItemCount())+")"),
+				masc.Text("Clear completed ("+strconv.Itoa(p.CompletedItemCount())+")"),
 			),
 		),
 	)
 }
 
-func (p *PageView) renderInfo() *rumtew.HTML {
+func (p *PageView) renderInfo() *masc.HTML {
 	return elem.Footer(
-		rumtew.Markup(
-			rumtew.Class("info"),
+		masc.Markup(
+			masc.Class("info"),
 		),
 
 		elem.Paragraph(
-			rumtew.Text("Double-click to edit a todo"),
+			masc.Text("Double-click to edit a todo"),
 		),
 		elem.Paragraph(
-			rumtew.Text("Created by "),
+			masc.Text("Created by "),
 			elem.Anchor(
-				rumtew.Markup(
+				masc.Markup(
 					prop.Href("http://github.com/neelance"),
 				),
-				rumtew.Text("Richard Musiol"),
+				masc.Text("Richard Musiol"),
 			),
 		),
 		elem.Paragraph(
-			rumtew.Text("Part of "),
+			masc.Text("Part of "),
 			elem.Anchor(
-				rumtew.Markup(
+				masc.Markup(
 					prop.Href("http://todomvc.com"),
 				),
-				rumtew.Text("TodoMVC"),
+				masc.Text("TodoMVC"),
 			),
 		),
 	)
 }
 
-func (p *PageView) renderItemList(send func(rumtew.Msg)) *rumtew.HTML {
-	var items rumtew.List
+func (p *PageView) renderItemList(send func(masc.Msg)) *masc.HTML {
+	var items masc.List
 	for i, item := range p.Items {
 		if (p.Filter == Active && item.Completed) || (p.Filter == Completed && !item.Completed) {
 			continue
@@ -311,13 +311,13 @@ func (p *PageView) renderItemList(send func(rumtew.Msg)) *rumtew.HTML {
 	}
 
 	return elem.Section(
-		rumtew.Markup(
-			rumtew.Class("main"),
+		masc.Markup(
+			masc.Class("main"),
 		),
 
 		elem.Input(
-			rumtew.Markup(
-				rumtew.Class("toggle-all"),
+			masc.Markup(
+				masc.Class("toggle-all"),
 				prop.ID("toggle-all"),
 				prop.Type(prop.TypeCheckbox),
 				prop.Checked(p.CompletedItemCount() == len(p.Items)),
@@ -325,22 +325,22 @@ func (p *PageView) renderItemList(send func(rumtew.Msg)) *rumtew.HTML {
 			),
 		),
 		elem.Label(
-			rumtew.Markup(
+			masc.Markup(
 				prop.For("toggle-all"),
 			),
-			rumtew.Text("Mark all as complete"),
+			masc.Text("Mark all as complete"),
 		),
 
 		elem.UnorderedList(
-			rumtew.Markup(
-				rumtew.Class("todo-list"),
+			masc.Markup(
+				masc.Class("todo-list"),
 			),
 			items,
 		),
 	)
 }
 
-func (p *PageView) Copy() rumtew.Component {
+func (p *PageView) Copy() masc.Component {
 	cpy := *p
 	return &cpy
 }

@@ -1,4 +1,4 @@
-package rumtew
+package masc
 
 func replaceNode(newNode, oldNode jsObject) {
 	if newNode.Equal(oldNode) {

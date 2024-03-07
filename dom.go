@@ -1,4 +1,4 @@
-package rumtew
+package masc
 
 import (
 	"reflect"
@@ -29,11 +29,11 @@ func (c *Core) isComponentOrHTML() {}
 // struct:
 //
 //	type MyComponent struct {
-//		vecty.Core
+//		masc.Core
 //		... additional component fields (state or properties) ...
 //	}
 //
-//	func (c *MyComponent) Render() vecty.ComponentOrHTML {
+//	func (c *MyComponent) Render() masc.ComponentOrHTML {
 //		... rendering ...
 //	}
 type Component interface {
@@ -62,7 +62,7 @@ type Component interface {
 // implement at least a shallow-copy Copier interface (this is not required
 // otherwise):
 //
-//	func (c *MyComponent) Copy() vecty.Component {
+//	func (c *MyComponent) Copy() masc.Component {
 //		cpy := *c
 //		return &cpy
 //	}
@@ -171,9 +171,9 @@ func (h *HTML) isComponentOrHTML() {}
 func (h *HTML) createNode() {
 	switch {
 	case h.tag != "" && h.text != "":
-		panic("vecty: internal error (only one of HTML.tag or HTML.text may be set)")
+		panic("masc: internal error (only one of HTML.tag or HTML.text may be set)")
 	case h.tag == "" && h.innerHTML != "":
-		panic("vecty: only HTML may have UnsafeHTML attribute")
+		panic("masc: only HTML may have UnsafeHTML attribute")
 	case h.tag != "" && h.namespace == "":
 		h.node = global().Get("document").Call("createElement", h.tag)
 	case h.tag != "" && h.namespace != "":
@@ -389,19 +389,19 @@ func (h *HTML) reconcileChildren(prev *HTML, send func(Msg)) (pendingMounts []Mo
 		)
 		keyer, isKeyer := nextChild.(Keyer)
 		if hasKeyedChildren && !isKeyer {
-			panic("vecty: all siblings must have keys when using keyed elements")
+			panic("masc: all siblings must have keys when using keyed elements")
 		}
 		if isKeyer {
 			nextKey = keyer.Key()
 			if hasKeyedChildren && nextKey == nil {
-				panic("vecty: all siblings must have keys when using keyed elements")
+				panic("masc: all siblings must have keys when using keyed elements")
 			}
 			if nextKey != nil {
 				if h.keyedChildren == nil {
 					h.keyedChildren = make(map[interface{}]ComponentOrHTML)
 				}
 				if _, exists := h.keyedChildren[nextKey]; exists {
-					panic("vecty: duplicate sibling key")
+					panic("masc: duplicate sibling key")
 				}
 				// Store the keyed child.
 				h.keyedChildren[nextKey] = nextChild
@@ -510,7 +510,7 @@ func (h *HTML) reconcileChildren(prev *HTML, send func(Msg)) (pendingMounts []Mo
 		// Determine the next child render.
 		nextChildRender, skip, mounters := render(nextChild, prevChild, send)
 		if nextChildRender != nil && prevChildRender != nil && nextChildRender == prevChildRender {
-			panic("vecty: next child render must not equal previous child render (did the child Render illegally return a stored render variable?)")
+			panic("masc: next child render must not equal previous child render (did the child Render illegally return a stored render variable?)")
 		}
 
 		// Store the last rendered child to determine insertion target for
@@ -582,7 +582,7 @@ func (h *HTML) reconcileChildren(prev *HTML, send func(Msg)) (pendingMounts []Mo
 			}
 			h.insertBefore(h.insertBeforeNode, nextChildRender)
 		default:
-			panic("vecty: internal error (unexpected switch state)")
+			panic("masc: internal error (unexpected switch state)")
 		}
 	}
 
@@ -737,7 +737,7 @@ func (l KeyedList) reconcile(parent *HTML, prevChild ComponentOrHTML, send func(
 			pendingMounts = l.html.reconcileChildren(prev, send)
 		}
 	default:
-		panic("vecty: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(v).String() + ")")
+		panic("masc: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(v).String() + ")")
 	}
 
 	// Update the parent insertBeforeNode and lastRenderedChild values to be
@@ -806,10 +806,10 @@ func Text(text string, m ...MarkupOrChild) *HTML {
 // result in only one call to the Component's Render method.
 func rerender(c Component, send func(Msg)) {
 	if c == nil {
-		panic("vecty: Rerender illegally called with a nil Component argument")
+		panic("masc: Rerender illegally called with a nil Component argument")
 	}
 	if c.Context().prevRender == nil {
-		panic("vecty: Rerender invoked on Component that has never been rendered")
+		panic("masc: Rerender invoked on Component that has never been rendered")
 	}
 	if c.Context().unmounted {
 		return
@@ -913,7 +913,7 @@ func extractHTML(e ComponentOrHTML) *HTML {
 	case Component:
 		return extractHTML(v.Context().prevRender)
 	default:
-		panic("vecty: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(e).String() + ")")
+		panic("masc: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(e).String() + ")")
 	}
 }
 
@@ -926,7 +926,7 @@ func sameType(first, second ComponentOrHTML) bool {
 // copyComponent makes a copy of the given component.
 func copyComponent(c Component) Component {
 	if c == nil {
-		panic("vecty: internal error (cannot copy nil Component)")
+		panic("masc: internal error (cannot copy nil Component)")
 	}
 
 	// If the Component implements the Copier interface, then use that to
@@ -934,7 +934,7 @@ func copyComponent(c Component) Component {
 	if copier, ok := c.(Copier); ok {
 		cpy := copier.Copy()
 		if cpy == c {
-			panic("vecty: Component.Copy illegally returned an identical *MyComponent pointer")
+			panic("masc: Component.Copy illegally returned an identical *MyComponent pointer")
 		}
 		return cpy
 	}
@@ -945,7 +945,7 @@ func copyComponent(c Component) Component {
 	// copy.
 	v := reflect.ValueOf(c)
 	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
-		panic("vecty: Component must be pointer to struct, found " + reflect.TypeOf(c).String())
+		panic("masc: Component must be pointer to struct, found " + reflect.TypeOf(c).String())
 	}
 	cpy := reflect.New(v.Elem().Type())
 	cpy.Elem().Set(v.Elem())
@@ -953,7 +953,7 @@ func copyComponent(c Component) Component {
 }
 
 // copyProps copies all struct fields from src to dst that are tagged with
-// `vecty:"prop"`.
+// `masc:"prop"`.
 //
 // If src and dst are different types or non-pointers, copyProps panics.
 func copyProps(src, dst Component) {
@@ -963,17 +963,17 @@ func copyProps(src, dst Component) {
 	s := reflect.ValueOf(src)
 	d := reflect.ValueOf(dst)
 	if s.Type() != d.Type() {
-		panic("vecty: internal error (attempted to copy properties of incompatible structs)")
+		panic("masc: internal error (attempted to copy properties of incompatible structs)")
 	}
 	if s.Kind() != reflect.Ptr || d.Kind() != reflect.Ptr {
-		panic("vecty: internal error (attempted to copy properties of non-pointer)")
+		panic("masc: internal error (attempted to copy properties of non-pointer)")
 	}
 	for i := 0; i < s.Elem().NumField(); i++ {
 		sf := s.Elem().Field(i)
-		if s.Elem().Type().Field(i).Tag.Get("vecty") == "prop" {
+		if s.Elem().Type().Field(i).Tag.Get("masc") == "prop" {
 			df := d.Elem().Field(i)
 			if sf.Type() != df.Type() {
-				panic("vecty: internal error (should never be possible, struct types are identical)")
+				panic("masc: internal error (should never be possible, struct types are identical)")
 			}
 			df.Set(sf)
 		}
@@ -1003,7 +1003,7 @@ func render(next, prev ComponentOrHTML, send func(Msg)) (nextHTML *HTML, skip bo
 	case nil:
 		return nil, false, nil
 	default:
-		panic("vecty: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(next).String() + ")")
+		panic("masc: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(next).String() + ")")
 	}
 }
 
@@ -1014,7 +1014,7 @@ func renderComponent(next Component, prev ComponentOrHTML, send func(Msg)) (next
 	// If we had a component last render, and it's of compatible type, operate
 	// on the previous instance.
 	if prevComponent, ok := prev.(Component); ok && sameType(next, prevComponent) {
-		// Copy `vecty:"prop"` fields from the newly rendered component (next)
+		// Copy `masc:"prop"` fields from the newly rendered component (next)
 		// into the persistent component instance (prev) so that it is aware of
 		// what properties the parent has specified during SkipRender/Render
 		// below.
@@ -1029,7 +1029,7 @@ func renderComponent(next Component, prev ComponentOrHTML, send func(Msg)) (next
 		prevRenderComponent := next.Context().prevRenderComponent
 		if prevRenderComponent != nil {
 			if next == prevRenderComponent {
-				panic("vecty: internal error (SkipRender called with identical prev component)")
+				panic("masc: internal error (SkipRender called with identical prev component)")
 			}
 			if rs.SkipRender(prevRenderComponent) {
 				return nil, true, nil
@@ -1063,7 +1063,7 @@ func renderComponent(next Component, prev ComponentOrHTML, send func(Msg)) (next
 		// Reconcile the actual rendered HTML.
 		pendingMounts = nextHTML.reconcile(extractHTML(prev), send)
 	default:
-		panic("vecty: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(v).String() + ")")
+		panic("masc: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(v).String() + ")")
 	}
 
 	m := mountUnmount(nextRender, prevRender)
@@ -1180,7 +1180,7 @@ func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) in
 //
 // It is a short-handed form for writing:
 //
-//	err := vecty.RenderInto("body", body)
+//	err := masc.RenderInto("body", body, send)
 //	if err !== nil {
 //		panic(err)
 //	}
@@ -1203,7 +1203,7 @@ type ElementMismatchError struct {
 }
 
 func (e ElementMismatchError) Error() string {
-	return "vecty: " + e.method + `: expected Component.Render to return a "` + e.want + `", found "` + e.got + `"`
+	return "masc: " + e.method + `: expected Component.Render to return a "` + e.want + `", found "` + e.got + `"`
 }
 
 // InvalidTargetError is returned when the element targeted by a render is
@@ -1213,7 +1213,7 @@ type InvalidTargetError struct {
 }
 
 func (e InvalidTargetError) Error() string {
-	return "vecty: " + e.method + `: invalid target element is null or undefined`
+	return "masc: " + e.method + `: invalid target element is null or undefined`
 }
 
 // RenderInto renders the given component into the existing HTML element found
@@ -1237,7 +1237,7 @@ func renderIntoNode(methodName string, node jsObject, c Component, send func(Msg
 	batch.scheduled = true
 	nextRender, skip, pendingMounts := renderComponent(c, nil, send)
 	if skip {
-		panic("vecty: " + methodName + ": Component.SkipRender illegally returned true")
+		panic("masc: " + methodName + ": Component.SkipRender illegally returned true")
 	}
 	expectTag := toLower(node.Get("nodeName").String())
 	if nextRender.tag != expectTag {

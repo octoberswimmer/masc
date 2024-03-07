@@ -1,7 +1,7 @@
 //go:build tinygo
 // +build tinygo
 
-package rumtew
+package masc
 
 import "fmt"
 
@@ -12,10 +12,10 @@ func init() {
 	// BUG: TinyGo does not allow calling global() inside of init like this.
 	//
 	//if global() == nil {
-	//	panic("vecty: only WebAssembly, TinyGo, and testing compilation is supported")
+	//	panic("masc: only WebAssembly, TinyGo, and testing compilation is supported")
 	//}
 	//if global().Get("document").IsUndefined() {
-	//	panic("vecty: only running inside a browser is supported")
+	//	panic("masc: only running inside a browser is supported")
 	//}
 }
 
@@ -58,9 +58,9 @@ func tinyGoAssertCopier(c Component) {
 		return
 	}
 	println(c)
-	panic(fmt.Sprintf(`rumtew: Component %T does not implement rumtew.Copier interface
+	panic(fmt.Sprintf(`masc: Component %T does not implement masc.Copier interface
 
-TinyGo does not support Vecty components that do not implement the rumtew.Copier interface.
+TinyGo does not support Vecty components that do not implement the masc.Copier interface.
 
 ## What does this mean?
 
@@ -69,9 +69,9 @@ This prevents Vecty from automatically copying your component for you using refl
 
 ## How do I fix this?
 
-You will need to implement the 'rumtew.Copier' interface on your component, e.g.:
+You will need to implement the 'masc.Copier' interface on your component, e.g.:
 
-	func (c *MyComponent) Copy() rumtew.Component {
+	func (c *MyComponent) Copy() masc.Component {
 		cpy := *c
 		return &cpy
 	}

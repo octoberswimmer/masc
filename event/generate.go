@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -185,7 +186,7 @@ func main() {
 // CC-BY-SA 2.5.
 package event
 
-import "github.com/hexops/vecty"
+import "github.com/octoberswimmer/masc"
 `)
 
 	for _, name := range names {
@@ -196,8 +197,8 @@ import "github.com/hexops/vecty"
 		fmt.Fprintf(file, `%s
 //
 // https://developer.mozilla.org%s
-func %s(listener func(*vecty.Event)) *vecty.EventListener {
-	return &vecty.EventListener{Name: "%s", Listener: listener}
+func %s(listener func(*masc.Event)) *masc.EventListener {
+	return &masc.EventListener{Name: "%s", Listener: listener}
 }
 `, descToComments(e.Desc), e.Link[6:], name, e.Name)
 	}

@@ -11,7 +11,7 @@ By the way, the non-annotated source code for this program is available
 [on GitHub][tut-source].
 
 [elm]: https://guide.elm-lang.org/architecture/
-[tut-source]:https://github.com/octoberswimmer/rumtew/tree/master/tutorials/basics
+[tut-source]:https://github.com/octoberswimmer/masc/tree/master/tutorials/basics
 
 ## Enough! Let's get to it.
 
@@ -27,7 +27,7 @@ import (
     "fmt"
     "os"
 
-    tea "github.com/octoberswimmer/rumtew"
+    tea "github.com/octoberswimmer/masc"
 )
 ```
 
@@ -216,14 +216,14 @@ look at the [Command Tutorial][cmd]. It's pretty simple.
 There are also several [Bubble Tea examples][examples] available and, of course,
 there are [Go Docs][docs].
 
-[cmd]: http://github.com/octoberswimmer/rumtew/tree/master/tutorials/commands/
-[examples]: http://github.com/octoberswimmer/rumtew/tree/master/examples
-[docs]: https://pkg.go.dev/github.com/octoberswimmer/rumtew?tab=doc
+[cmd]: http://github.com/octoberswimmer/masc/tree/master/tutorials/commands/
+[examples]: http://github.com/octoberswimmer/masc/tree/master/examples
+[docs]: https://pkg.go.dev/github.com/octoberswimmer/masc?tab=doc
 
 ## Additional Resources
 
-* [Libraries we use with Bubble Tea](https://github.com/octoberswimmer/rumtew/#libraries-we-use-with-bubble-tea)
-* [Bubble Tea in the Wild](https://github.com/octoberswimmer/rumtew/#bubble-tea-in-the-wild)
+* [Libraries we use with Bubble Tea](https://github.com/octoberswimmer/masc/#libraries-we-use-with-bubble-tea)
+* [Bubble Tea in the Wild](https://github.com/octoberswimmer/masc/#bubble-tea-in-the-wild)
 
 ### Feedback
 

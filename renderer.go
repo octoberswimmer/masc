@@ -1,4 +1,4 @@
-package rumtew
+package masc
 
 // renderer is the interface for Bubble Tea renderers.
 type renderer interface {

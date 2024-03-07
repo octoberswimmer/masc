@@ -1,7 +1,7 @@
 //go:build !js
 // +build !js
 
-package rumtew
+package masc
 
 import (
 	"strings"

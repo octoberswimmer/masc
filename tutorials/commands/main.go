@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	tea "github.com/octoberswimmer/rumtew"
+	tea "github.com/octoberswimmer/masc"
 )
 
 const url = "https://charm.sh/"

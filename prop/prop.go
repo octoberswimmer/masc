@@ -1,7 +1,7 @@
 package prop
 
 import (
-	vecty "github.com/octoberswimmer/rumtew"
+	"github.com/octoberswimmer/masc"
 )
 
 type InputType string
@@ -36,50 +36,50 @@ const (
 	TypeWeek          InputType = "week"
 )
 
-func Autofocus(autofocus bool) vecty.Applyer {
-	return vecty.Property("autofocus", autofocus)
+func Autofocus(autofocus bool) masc.Applyer {
+	return masc.Property("autofocus", autofocus)
 }
 
-func Disabled(disabled bool) vecty.Applyer {
-	return vecty.Property("disabled", disabled)
+func Disabled(disabled bool) masc.Applyer {
+	return masc.Property("disabled", disabled)
 }
 
-func Checked(checked bool) vecty.Applyer {
-	return vecty.Property("checked", checked)
+func Checked(checked bool) masc.Applyer {
+	return masc.Property("checked", checked)
 }
 
-func For(id string) vecty.Applyer {
-	return vecty.Property("htmlFor", id)
+func For(id string) masc.Applyer {
+	return masc.Property("htmlFor", id)
 }
 
-func Href(url string) vecty.Applyer {
-	return vecty.Property("href", url)
+func Href(url string) masc.Applyer {
+	return masc.Property("href", url)
 }
 
-func ID(id string) vecty.Applyer {
-	return vecty.Property("id", id)
+func ID(id string) masc.Applyer {
+	return masc.Property("id", id)
 }
 
-func Placeholder(text string) vecty.Applyer {
-	return vecty.Property("placeholder", text)
+func Placeholder(text string) masc.Applyer {
+	return masc.Property("placeholder", text)
 }
 
-func Src(url string) vecty.Applyer {
-	return vecty.Property("src", url)
+func Src(url string) masc.Applyer {
+	return masc.Property("src", url)
 }
 
-func Type(t InputType) vecty.Applyer {
-	return vecty.Property("type", string(t))
+func Type(t InputType) masc.Applyer {
+	return masc.Property("type", string(t))
 }
 
-func Value(v string) vecty.Applyer {
-	return vecty.Property("value", v)
+func Value(v string) masc.Applyer {
+	return masc.Property("value", v)
 }
 
-func Name(name string) vecty.Applyer {
-	return vecty.Property("name", name)
+func Name(name string) masc.Applyer {
+	return masc.Property("name", name)
 }
 
-func Alt(text string) vecty.Applyer {
-	return vecty.Property("alt", text)
+func Alt(text string) masc.Applyer {
+	return masc.Property("alt", text)
 }

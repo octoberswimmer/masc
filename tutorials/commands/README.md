@@ -7,8 +7,8 @@ understanding of [the first tutorial][basics].
 
 You can find the non-annotated version of this program [on GitHub][source].
 
-[basics]: https://github.com/octoberswimmer/rumtew/tree/master/tutorials/basics
-[source]: https://github.com/octoberswimmer/rumtew/blob/master/tutorials/commands/main.go
+[basics]: https://github.com/octoberswimmer/masc/tree/master/tutorials/basics
+[source]: https://github.com/octoberswimmer/masc/blob/master/tutorials/commands/main.go
 
 ## Let's Go!
 
@@ -27,7 +27,7 @@ import (
     "os"
     "time"
 
-    tea "github.com/octoberswimmer/rumtew"
+    tea "github.com/octoberswimmer/masc"
 )
 
 const url = "https://charm.sh/"
@@ -222,13 +222,13 @@ a component library for Bubble Tea.
 And, of course, check out the [Go Docs][docs].
 
 [bubbles]: https://github.com/charmbracelet/bubbles
-[docs]: https://pkg.go.dev/github.com/octoberswimmer/rumtew?tab=doc
-[examples]: https://github.com/octoberswimmer/rumtew/tree/master/examples
+[docs]: https://pkg.go.dev/github.com/octoberswimmer/masc?tab=doc
+[examples]: https://github.com/octoberswimmer/masc/tree/master/examples
 
 ## Additional Resources
 
-* [Libraries we use with Bubble Tea](https://github.com/octoberswimmer/rumtew/#libraries-we-use-with-bubble-tea)
-* [Bubble Tea in the Wild](https://github.com/octoberswimmer/rumtew/#bubble-tea-in-the-wild)
+* [Libraries we use with Bubble Tea](https://github.com/octoberswimmer/masc/#libraries-we-use-with-bubble-tea)
+* [Bubble Tea in the Wild](https://github.com/octoberswimmer/masc/#bubble-tea-in-the-wild)
 
 ### Feedback
 

@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 package main
@@ -17,9 +18,8 @@ import (
 // elemNameMap translates lowercase HTML tag names from the MDN source into a
 // proper Go style name with MixedCaps and initialisms:
 //
-//  https://github.com/golang/go/wiki/CodeReviewComments#mixed-caps
-//  https://github.com/golang/go/wiki/CodeReviewComments#initialisms
-//
+//	https://github.com/golang/go/wiki/CodeReviewComments#mixed-caps
+//	https://github.com/golang/go/wiki/CodeReviewComments#initialisms
 var elemNameMap = map[string]string{
 	"a":          "Anchor",
 	"abbr":       "Abbreviation",
@@ -105,7 +105,7 @@ func main() {
 // CC-BY-SA 2.5.
 package elem
 
-import "github.com/hexops/vecty"
+import "github.com/octoberswimmer/masc"
 `)
 
 	doc.Find(".quick-links a").Each(func(i int, s *goquery.Selection) {
@@ -201,8 +201,8 @@ func writeElem(w io.Writer, name, desc, link string) {
 	fmt.Fprintf(w, `%s
 //
 // https://developer.mozilla.org%s
-func %s(markup ...vecty.MarkupOrChild) *vecty.HTML {
-	return vecty.Tag("%s", markup...)
+func %s(markup ...masc.MarkupOrChild) *masc.HTML {
+	return masc.Tag("%s", markup...)
 }
 `, descToComments(desc), link, funName, name)
 }
