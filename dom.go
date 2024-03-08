@@ -1160,7 +1160,7 @@ func unmount(e ComponentOrHTML) {
 }
 
 // requestAnimationFrame calls the native JS function of the same name.
-func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) int {
+func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) {
 	var cb jsFunc
 	cb = funcOf(func(_ jsObject, args []jsObject) interface{} {
 		cb.Release()
@@ -1168,7 +1168,7 @@ func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) in
 		callback(args[0].Float(), send)
 		return undefined()
 	})
-	return global().Call("requestAnimationFrame", cb).Int()
+	global().Call("requestAnimationFrame", cb)
 }
 
 // RenderBody renders the given component as the document body. The given
@@ -1190,9 +1190,6 @@ func RenderBody(body Component, send func(Msg)) {
 	err := renderIntoNode("RenderBody", target, body, send)
 	if err != nil {
 		panic(err)
-	}
-	if !isTest {
-		// select {} // run Go forever
 	}
 }
 

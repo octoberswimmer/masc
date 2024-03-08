@@ -48,28 +48,6 @@ func WithoutSignals() ProgramOption {
 	}
 }
 
-// WithMouseCellMotion starts the program with the mouse enabled in "cell
-// motion" mode.
-//
-// Cell motion mode enables mouse click, release, and wheel events. Mouse
-// movement events are also captured if a mouse button is pressed (i.e., drag
-// events). Cell motion mode is better supported than all motion mode.
-//
-// This will try to enable the mouse in extended mode (SGR), if that is not
-// supported by the terminal it will fall back to normal mode (X10).
-//
-// To enable mouse cell motion once the program has already started running use
-// the EnableMouseCellMotion command. To disable the mouse when the program is
-// running use the DisableMouse command.
-//
-// The mouse will be automatically disabled when the program exits.
-func WithMouseCellMotion() ProgramOption {
-	return func(p *Program) {
-		p.startupOptions |= withMouseCellMotion // set
-		p.startupOptions &^= withMouseAllMotion // clear
-	}
-}
-
 // WithoutRenderer disables the renderer. When this is set output and log
 // statements will be plainly sent to stdout (or another output if one is set)
 // without any rendering and redrawing logic. In other words, printing and
@@ -116,14 +94,5 @@ func WithoutRenderer() ProgramOption {
 func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 	return func(p *Program) {
 		p.filter = filter
-	}
-}
-
-// WithFPS sets a custom maximum FPS at which the renderer should run. If
-// less than 1, the default value of 60 will be used. If over 120, the FPS
-// will be capped at 120.
-func WithFPS(fps int) ProgramOption {
-	return func(p *Program) {
-		p.fps = fps
 	}
 }

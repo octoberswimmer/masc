@@ -54,7 +54,7 @@ func TestTeaQuit(t *testing.T) {
 	ts := testSuite(t)
 	defer ts.done()
 
-	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.isUndefined.mock(`global.Call("requestAnimationFrame", func)`, 0)
 	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
 	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
@@ -87,7 +87,7 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 	ts := testSuite(t)
 	defer ts.done()
 
-	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.isUndefined.mock(`global.Call("requestAnimationFrame", func)`, 0)
 	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
 	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
@@ -126,7 +126,7 @@ func TestTeaKill(t *testing.T) {
 	ts := testSuite(t)
 	defer ts.done()
 
-	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.isUndefined.mock(`global.Call("requestAnimationFrame", func)`, 0)
 	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
 	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
@@ -155,7 +155,7 @@ func TestTeaContext(t *testing.T) {
 	ts := testSuite(t)
 	defer ts.done()
 
-	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.isUndefined.mock(`global.Call("requestAnimationFrame", func)`, 0)
 	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
 	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
@@ -186,7 +186,7 @@ func TestTeaBatchMsg(t *testing.T) {
 	ts := testSuite(t)
 	defer ts.done()
 
-	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.isUndefined.mock(`global.Call("requestAnimationFrame", func)`, 0)
 	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
 	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
@@ -224,7 +224,7 @@ func TestTeaSequenceMsg(t *testing.T) {
 	ts := testSuite(t)
 	defer ts.done()
 
-	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.isUndefined.mock(`global.Call("requestAnimationFrame", func)`, 0)
 	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
 	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
@@ -254,7 +254,7 @@ func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
 	ts := testSuite(t)
 	defer ts.done()
 
-	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.isUndefined.mock(`global.Call("requestAnimationFrame", func)`, 0)
 	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
 	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
@@ -277,7 +277,7 @@ func TestTeaSend(t *testing.T) {
 	ts := testSuite(t)
 	defer ts.done()
 
-	ts.ints.mock(`global.Call("requestAnimationFrame", func)`, 0)
+	ts.isUndefined.mock(`global.Call("requestAnimationFrame", func)`, 0)
 	ts.strings.mock(`global.Get("document").Get("readyState")`, "complete")
 	ts.strings.mock(`global.Get("document").Call("querySelector", "body").Get("nodeName")`, "BODY")
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)

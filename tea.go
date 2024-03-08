@@ -12,7 +12,6 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/muesli/cancelreader"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -43,24 +42,6 @@ type Model interface {
 // to another part of your program. That can almost always be done in the
 // update function.
 type Cmd func() Msg
-
-type inputType int
-
-const (
-	defaultInput inputType = iota
-	ttyInput
-	customInput
-)
-
-// String implements the stringer interface for [inputType]. It is inteded to
-// be used in testing.
-func (i inputType) String() string {
-	return [...]string{
-		"default input",
-		"tty input",
-		"custom input",
-	}[i]
-}
 
 // Options to customize the program during its initialization. These are
 // generally set with ProgramOptions.
@@ -117,8 +98,6 @@ type Program struct {
 	// treated as bits. These options can be set via various ProgramOptions.
 	startupOptions startupOptions
 
-	inputType inputType
-
 	ctx    context.Context
 	cancel context.CancelFunc
 
@@ -128,17 +107,9 @@ type Program struct {
 
 	renderer renderer
 
-	// where to read inputs from, this will usually be os.Stdin.
-	cancelReader cancelreader.CancelReader
-	readLoopDone chan struct{}
-
 	ignoreSignals uint32
 
 	filter func(Model, Msg) Msg
-
-	// fps is the frames per second we should set on the renderer, if
-	// applicable,
-	fps int
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -173,13 +144,6 @@ func NewProgram(model Model, opts ...ProgramOption) *Program {
 	return p
 }
 
-// handleResize handles terminal resize events.
-func (p *Program) handleResize() chan struct{} {
-	ch := make(chan struct{})
-
-	return ch
-}
-
 // handleCommands runs commands in a goroutine and sends the result to the
 // program's message channel.
 func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
@@ -212,9 +176,6 @@ func (p *Program) handleCommands(cmds chan Cmd) chan struct{} {
 	}()
 
 	return ch
-}
-
-func (p *Program) disableMouse() {
 }
 
 // eventLoop is the central message loop. It receives and handles the default
