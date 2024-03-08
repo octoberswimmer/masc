@@ -1,12 +1,12 @@
 # Building examples
 
-Vecty examples can be built with the Go 1.14+ WebAssembly compilation target.
+Masc examples can be built with the Go 1.14+ WebAssembly compilation target.
 
-Additionally, Vecty has [experimental support for the TinyGo compiler]().
+Additionally, Masc has [experimental support for the TinyGo compiler]().
 
 ## Building for WebAssembly with Go 1.14+
 
-**Ensure you are running Go 1.14 or higher.** Vecty requires Go 1.14+ as it makes use of improvements to the `syscall/js` package which are not present in earlier versions of Go.
+**Ensure you are running Go 1.14 or higher.** Masc requires Go 1.14+ as it makes use of improvements to the `syscall/js` package which are not present in earlier versions of Go.
 
 ### Running examples
 
@@ -35,7 +35,7 @@ TinyGo support is in very early stages still. Please refer to https://github.com
 
 Other compilers such as [GopherJS](https://github.com/gopherjs) may work so long as they are compliant with the official Go 1.14+ compiler (support modules, the `syscall/js` interface, reflection, etc.)
 
-Vecty currently can only be built to run in web browsers.
+Masc currently can only be built to run in web browsers.
 
 ## More examples
 
