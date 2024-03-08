@@ -1,6 +1,6 @@
 module github.com/octoberswimmer/masc
 
-go 1.18
+go 1.21
 
 require (
 	github.com/muesli/cancelreader v0.2.2

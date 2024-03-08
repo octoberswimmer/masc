@@ -50,6 +50,9 @@ const (
 
 func (m *PageView) Init() masc.Cmd {
 	fmt.Println("Initializing PageView")
+	masc.AddStylesheet("https://rawgit.com/tastejs/todomvc-common/master/base.css")
+	masc.AddStylesheet("https://rawgit.com/tastejs/todomvc-app-css/master/index.css")
+
 	return attachLocalStorage
 }
 

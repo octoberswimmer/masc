@@ -11,9 +11,6 @@ type FocusCheck struct{}
 
 func main() {
 	masc.SetTitle("Hello masc!")
-	masc.AddStylesheet("https://rawgit.com/tastejs/todomvc-common/master/base.css")
-	masc.AddStylesheet("https://rawgit.com/tastejs/todomvc-app-css/master/index.css")
-
 	m := &Body{
 		todo: &components.PageView{},
 	}
