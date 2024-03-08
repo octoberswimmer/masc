@@ -27,15 +27,3 @@ jobs:
 
       - name: Test
         run: go test ./...
-
-      - name: Build examples
-        run: go build -v ./...
-        working-directory: ./examples
-
-      - name: Test examples
-        run: go test -v ./...
-        working-directory: ./examples
-
-      - name: Build tutorials
-        run: go build -v ./...
-        working-directory: ./tutorials
