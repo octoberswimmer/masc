@@ -108,7 +108,10 @@ func (r *standardRenderer) render(c Component, send func(Msg)) {
 	}
 	r.rendered = true
 	if !isZeroValue(r.rootNode) {
-		renderIntoNode("RenderIntoNode", r.rootNode, c, send)
+		err := renderIntoNode("RenderIntoNode", r.rootNode, c, send)
+		if err != nil {
+			panic(err)
+		}
 	} else {
 		RenderBody(c, send)
 	}

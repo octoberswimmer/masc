@@ -31,6 +31,7 @@ func RenderIntoNode(node js.Value, c Component, send func(Msg)) error {
 	return renderIntoNode("RenderIntoNode", wrapObject(node), c, send)
 }
 
+// RenderTo configures the renderer to render the model to the passed DOM node.
 func RenderTo(rootNode js.Value) ProgramOption {
 	return func(p *Program) {
 		p.renderer = newNodeRenderer(wrapObject(rootNode))

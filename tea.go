@@ -1,12 +1,8 @@
-// Package tea provides a framework for building rich terminal user interfaces
-// based on the paradigms of The Elm Architecture. It's well-suited for simple
-// and complex terminal applications, either inline, full-window, or a mix of
-// both. It's been battle-tested in several large projects and is
-// production-ready.
+// Package masc provides a framework for building browser applications
+// based on the paradigms of The Elm Architecture.  It combines the state
+// management of Bubble Tea with the Vecty view rendering model.
 //
-// A tutorial is available at https://github.com/octoberswimmer/masc/tree/master/tutorials
-//
-// Example programs can be found at https://github.com/octoberswimmer/masc/tree/master/examples
+// Example programs can be found at https://github.com/octoberswimmer/masc/tree/main/example
 package masc
 
 import (
@@ -307,7 +303,7 @@ func (p *Program) Run() (Model, error) {
 	if !p.startupOptions.has(withoutCatchPanics) {
 		defer func() {
 			if r := recover(); r != nil {
-				p.shutdown(true)
+				p.shutdown()
 				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
 				debug.PrintStack()
 				return
@@ -362,7 +358,7 @@ func (p *Program) Run() (Model, error) {
 	handlers.shutdown()
 
 	// Restore terminal state.
-	p.shutdown(killed)
+	p.shutdown()
 
 	return model, err
 }
@@ -425,6 +421,6 @@ func (p *Program) Wait() {
 
 // shutdown performs operations to free up resources and restore the terminal
 // to its original state.
-func (p *Program) shutdown(kill bool) {
+func (p *Program) shutdown() {
 	p.finished <- struct{}{}
 }

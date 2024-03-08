@@ -17,4 +17,4 @@ func init() {
 
 func (h *HTML) tinyGoCannotIterateNilMaps() {}
 
-func tinyGoAssertCopier(c Component) {}
+func tinyGoAssertCopier(_ Component) {}

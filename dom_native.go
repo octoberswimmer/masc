@@ -41,6 +41,7 @@ func RenderIntoNode(node SyscallJSValue, c Component, send func(Msg)) error {
 	return renderIntoNode("RenderIntoNode", node, c, send)
 }
 
+// RenderTo configures the renderer to render the model to the passed DOM node.
 func RenderTo(rootNode SyscallJSValue) ProgramOption {
 	return func(p *Program) {
 		p.renderer = newNodeRenderer(rootNode)
@@ -88,13 +89,13 @@ func (e *jsObjectImpl) Equal(other jsObject) bool {
 }
 
 var (
-	htmlNodeImpl = func(h *HTML) SyscallJSValue {
+	htmlNodeImpl = func(_ *HTML) SyscallJSValue {
 		panic("not implemented on this architecture in non-testing environment")
 	}
-	funcOfImpl = func(fn func(this jsObject, args []jsObject) interface{}) jsFunc {
+	funcOfImpl = func(_ func(this jsObject, args []jsObject) interface{}) jsFunc {
 		panic("not implemented on this architecture in non-testing environment")
 	}
-	valueOfImpl = func(v interface{}) jsObject {
+	valueOfImpl = func(_ interface{}) jsObject {
 		panic("not implemented on this architecture in non-testing environment")
 	}
 )

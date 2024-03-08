@@ -233,7 +233,7 @@ func (h *HTML) reconcileProperties(prev *HTML) {
 	// Wrap event listeners
 	for _, l := range h.eventListeners {
 		l := l
-		l.wrapper = funcOf(func(this jsObject, args []jsObject) interface{} {
+		l.wrapper = funcOf(func(_ jsObject, args []jsObject) interface{} {
 			jsEvent := args[0]
 			if l.callPreventDefault {
 				jsEvent.Call("preventDefault")
@@ -384,7 +384,7 @@ func (h *HTML) reconcileChildren(prev *HTML, send func(Msg)) (pendingMounts []Mo
 		//
 		// TODO(pdf): Add tests for node equality, keyed children
 		var (
-			new     = !h.node.Equal(prev.node)
+			isNew   = !h.node.Equal(prev.node)
 			nextKey interface{}
 		)
 		keyer, isKeyer := nextChild.(Keyer)
@@ -412,7 +412,7 @@ func (h *HTML) reconcileChildren(prev *HTML, send func(Msg)) (pendingMounts []Mo
 		// If this is a new element (changed type, or did not exist previously),
 		// simply add the element directly. The existence of keyed children
 		// can not be determined by children index, so skip if keyed.
-		if (i >= len(prev.children) && !hasKeyedChildren) || new {
+		if (i >= len(prev.children) && !hasKeyedChildren) || isNew {
 			if nextChildList, ok := nextChild.(KeyedList); ok {
 				pendingMounts = append(pendingMounts, nextChildList.reconcile(h, nil, send)...)
 				continue
@@ -1162,7 +1162,7 @@ func unmount(e ComponentOrHTML) {
 // requestAnimationFrame calls the native JS function of the same name.
 func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) int {
 	var cb jsFunc
-	cb = funcOf(func(this jsObject, args []jsObject) interface{} {
+	cb = funcOf(func(_ jsObject, args []jsObject) interface{} {
 		cb.Release()
 
 		callback(args[0].Float(), send)
