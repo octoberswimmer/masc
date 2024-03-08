@@ -66,15 +66,6 @@ func funcOf(fn func(this jsObject, args []jsObject) interface{}) jsFunc {
 	return funcOfImpl(fn)
 }
 
-type jsFuncImpl struct {
-	goFunc func(this jsObject, args []jsObject) interface{}
-}
-
-func (j *jsFuncImpl) String() string { return "func" }
-func (j *jsFuncImpl) Release()       {}
-
-func valueOf(v interface{}) jsObject { return valueOfImpl(v) }
-
 type wrappedObject struct {
 	jsObject
 	j jsObject
@@ -93,9 +84,6 @@ var (
 		panic("not implemented on this architecture in non-testing environment")
 	}
 	funcOfImpl = func(_ func(this jsObject, args []jsObject) interface{}) jsFunc {
-		panic("not implemented on this architecture in non-testing environment")
-	}
-	valueOfImpl = func(_ interface{}) jsObject {
 		panic("not implemented on this architecture in non-testing environment")
 	}
 )

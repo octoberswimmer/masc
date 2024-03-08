@@ -9,11 +9,20 @@ import (
 	"reflect"
 )
 
+type jsFuncImpl struct {
+	goFunc func(this jsObject, args []jsObject) interface{}
+}
+
+func (j *jsFuncImpl) String() string { return "func" }
+func (j *jsFuncImpl) Release()       {}
+
 func commandOutput(command string, args ...string) (string, error) {
 	cmd := exec.Command(command, args...)
 	out, _ := cmd.CombinedOutput()
 	return string(out), nil
 }
+
+var valueOfImpl func(interface{}) jsObject
 
 func init() {
 	htmlNodeImpl = func(h *HTML) SyscallJSValue {
@@ -45,3 +54,5 @@ func init() {
 		return r
 	}
 }
+
+func valueOf(v interface{}) jsObject { return valueOfImpl(v) }

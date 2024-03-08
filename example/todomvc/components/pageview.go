@@ -129,26 +129,25 @@ func attachLocalStorage() masc.Msg {
 	return nil
 }
 
-func (p *PageView) onNewItemTitleInput(send func(masc.Msg)) func(*masc.Event) {
+func (m *PageView) onNewItemTitleInput(send func(masc.Msg)) func(*masc.Event) {
 	return func(event *masc.Event) {
-		// p.newItemTitle = event.Target.Get("value").String()
 		send(NewItemTitleMsg{Title: event.Target.Get("value").String()})
 	}
 }
 
-func (p *PageView) onAdd(send func(masc.Msg)) func(*masc.Event) {
+func (m *PageView) onAdd(send func(masc.Msg)) func(*masc.Event) {
 	return func(event *masc.Event) {
 		send(AddItemMsg{})
 	}
 }
 
-func (p *PageView) onClearCompleted(send func(masc.Msg)) func(*masc.Event) {
+func (m *PageView) onClearCompleted(send func(masc.Msg)) func(*masc.Event) {
 	return func(event *masc.Event) {
 		send(ClearCompleted{})
 	}
 }
 
-func (p *PageView) onToggleAllCompleted(send func(masc.Msg)) func(*masc.Event) {
+func (m *PageView) onToggleAllCompleted(send func(masc.Msg)) func(*masc.Event) {
 	return func(event *masc.Event) {
 		send(SetAllCompleted{
 			Completed: event.Target.Get("checked").Bool(),
@@ -157,25 +156,25 @@ func (p *PageView) onToggleAllCompleted(send func(masc.Msg)) func(*masc.Event) {
 }
 
 // Render implements the masc.Component interface.
-func (p *PageView) Render(send func(masc.Msg)) masc.ComponentOrHTML {
+func (m *PageView) Render(send func(masc.Msg)) masc.ComponentOrHTML {
 	return elem.Div(
 		elem.Section(
 			masc.Markup(
 				masc.Class("todoapp"),
 			),
 
-			p.renderHeader(send),
-			masc.If(len(p.Items) > 0,
-				p.renderItemList(send),
-				p.renderFooter(send),
+			m.renderHeader(send),
+			masc.If(len(m.Items) > 0,
+				m.renderItemList(send),
+				m.renderFooter(send),
 			),
 		),
 
-		p.renderInfo(),
+		m.renderInfo(),
 	)
 }
 
-func (p *PageView) renderHeader(send func(masc.Msg)) *masc.HTML {
+func (m *PageView) renderHeader(send func(masc.Msg)) *masc.HTML {
 	return elem.Header(
 		masc.Markup(
 			masc.Class("header"),
@@ -187,7 +186,7 @@ func (p *PageView) renderHeader(send func(masc.Msg)) *masc.HTML {
 		elem.Form(
 			masc.Markup(
 				style.Margin(style.Px(0)),
-				event.Submit(p.onAdd(send)).PreventDefault(),
+				event.Submit(m.onAdd(send)).PreventDefault(),
 			),
 
 			elem.Input(
@@ -195,8 +194,8 @@ func (p *PageView) renderHeader(send func(masc.Msg)) *masc.HTML {
 					masc.Class("new-todo"),
 					prop.Placeholder("What needs to be done?"),
 					prop.Autofocus(true),
-					prop.Value(p.newItemTitle),
-					event.Input(p.onNewItemTitleInput(send)),
+					prop.Value(m.newItemTitle),
+					event.Input(m.onNewItemTitleInput(send)),
 				),
 			),
 		),
@@ -204,18 +203,18 @@ func (p *PageView) renderHeader(send func(masc.Msg)) *masc.HTML {
 }
 
 // ActiveItemCount returns the current number of items that are not completed.
-func (p *PageView) ActiveItemCount() int {
-	return p.count(false)
+func (m *PageView) ActiveItemCount() int {
+	return m.count(false)
 }
 
 // CompletedItemCount returns the current number of items that are completed.
-func (p *PageView) CompletedItemCount() int {
-	return p.count(true)
+func (m *PageView) CompletedItemCount() int {
+	return m.count(true)
 }
 
-func (p *PageView) count(completed bool) int {
+func (m *PageView) count(completed bool) int {
 	count := 0
-	for _, item := range p.Items {
+	for _, item := range m.Items {
 		if item.Completed == completed {
 			count++
 		}
@@ -223,8 +222,8 @@ func (p *PageView) count(completed bool) int {
 	return count
 }
 
-func (p *PageView) renderFooter(send func(masc.Msg)) *masc.HTML {
-	count := p.ActiveItemCount()
+func (m *PageView) renderFooter(send func(masc.Msg)) *masc.HTML {
+	count := m.ActiveItemCount()
 	itemsLeftText := " items left"
 	if count == 1 {
 		itemsLeftText = " item left"
@@ -250,26 +249,26 @@ func (p *PageView) renderFooter(send func(masc.Msg)) *masc.HTML {
 			masc.Markup(
 				masc.Class("filters"),
 			),
-			&FilterButton{Label: "All", Filter: All, ActiveFilter: p.Filter == All},
+			&FilterButton{Label: "All", Filter: All, ActiveFilter: m.Filter == All},
 			masc.Text(" "),
-			&FilterButton{Label: "Active", Filter: Active, ActiveFilter: p.Filter == Active},
+			&FilterButton{Label: "Active", Filter: Active, ActiveFilter: m.Filter == Active},
 			masc.Text(" "),
-			&FilterButton{Label: "Completed", Filter: Completed, ActiveFilter: p.Filter == Completed},
+			&FilterButton{Label: "Completed", Filter: Completed, ActiveFilter: m.Filter == Completed},
 		),
 
-		masc.If(p.CompletedItemCount() > 0,
+		masc.If(m.CompletedItemCount() > 0,
 			elem.Button(
 				masc.Markup(
 					masc.Class("clear-completed"),
-					event.Click(p.onClearCompleted(send)),
+					event.Click(m.onClearCompleted(send)),
 				),
-				masc.Text("Clear completed ("+strconv.Itoa(p.CompletedItemCount())+")"),
+				masc.Text("Clear completed ("+strconv.Itoa(m.CompletedItemCount())+")"),
 			),
 		),
 	)
 }
 
-func (p *PageView) renderInfo() *masc.HTML {
+func (m *PageView) renderInfo() *masc.HTML {
 	return elem.Footer(
 		masc.Markup(
 			masc.Class("info"),
@@ -299,10 +298,10 @@ func (p *PageView) renderInfo() *masc.HTML {
 	)
 }
 
-func (p *PageView) renderItemList(send func(masc.Msg)) *masc.HTML {
+func (m *PageView) renderItemList(send func(masc.Msg)) *masc.HTML {
 	var items masc.List
-	for i, item := range p.Items {
-		if (p.Filter == Active && item.Completed) || (p.Filter == Completed && !item.Completed) {
+	for i, item := range m.Items {
+		if (m.Filter == Active && item.Completed) || (m.Filter == Completed && !item.Completed) {
 			continue
 		}
 		iv := &ItemView{Index: i, Title: item.Title, Completed: item.Completed, Editing: item.editing}
@@ -323,8 +322,8 @@ func (p *PageView) renderItemList(send func(masc.Msg)) *masc.HTML {
 				masc.Class("toggle-all"),
 				prop.ID("toggle-all"),
 				prop.Type(prop.TypeCheckbox),
-				prop.Checked(p.CompletedItemCount() == len(p.Items)),
-				event.Change(p.onToggleAllCompleted(send)),
+				prop.Checked(m.CompletedItemCount() == len(m.Items)),
+				event.Change(m.onToggleAllCompleted(send)),
 			),
 		),
 		elem.Label(
@@ -343,7 +342,7 @@ func (p *PageView) renderItemList(send func(masc.Msg)) *masc.HTML {
 	)
 }
 
-func (p *PageView) Copy() masc.Component {
-	cpy := *p
+func (m *PageView) Copy() masc.Component {
+	cpy := *m
 	return &cpy
 }

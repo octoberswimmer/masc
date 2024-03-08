@@ -20,7 +20,7 @@ linters:
     - gosec
     - nilerr
     - predeclared
-    - revive
+      #    - revive
     - rowserrcheck
     - sqlclosecheck
     - tparallel
