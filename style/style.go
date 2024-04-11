@@ -44,6 +44,26 @@ func Margin(size Size) masc.Applyer {
 	return masc.Style("margin", string(size))
 }
 
+func Position(pos string) masc.Applyer {
+	return masc.Style("position", pos)
+}
+
+func Bottom(size Size) masc.Applyer {
+	return masc.Style("bottom", string(size))
+}
+
+func Top(size Size) masc.Applyer {
+	return masc.Style("top", string(size))
+}
+
+func Left(size Size) masc.Applyer {
+	return masc.Style("left", string(size))
+}
+
+func Right(size Size) masc.Applyer {
+	return masc.Style("right", string(size))
+}
+
 type OverflowOption string
 
 const (
