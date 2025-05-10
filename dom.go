@@ -161,6 +161,33 @@ type HTML struct {
 	lastRenderedChild *HTML
 }
 
+// TagName returns the HTML tag for element nodes, or empty for text nodes.
+func (h *HTML) TagName() string {
+	return h.tag
+}
+
+// Text returns the text content of a text node, or empty for element nodes.
+func (h *HTML) Text() string {
+	return h.text
+}
+
+// InnerHTML returns the raw innerHTML of the node, if set via UnsafeHTML.
+// Otherwise empty.
+func (h *HTML) InnerHTML() string {
+	return h.innerHTML
+}
+
+// Children returns any HTML children of this node (skipping components).
+func (h *HTML) Children() []*HTML {
+	var out []*HTML
+	for _, c := range h.children {
+		if child, ok := c.(*HTML); ok {
+			out = append(out, child)
+		}
+	}
+	return out
+}
+
 // Key implements the Keyer interface.
 func (h *HTML) Key() interface{} {
 	return h.key
@@ -235,93 +262,6 @@ func (h *HTML) reconcile(prev *HTML, send func(Msg)) []Mounter {
 	}
 
 	return h.reconcileChildren(prev, send)
-}
-
-// reconcileProperties updates properties/attributes/etc to match the current
-// element.
-func (h *HTML) reconcileProperties(prev *HTML) {
-	// If nodes match, remove any outdated properties
-	if h.node.Equal(prev.node) {
-		h.removeProperties(prev)
-	}
-	h.tinyGoCannotIterateNilMaps()
-
-	// Wrap event listeners
-	for _, l := range h.eventListeners {
-		l := l
-		l.wrapper = funcOf(func(_ jsObject, args []jsObject) interface{} {
-			jsEvent := args[0]
-			if l.callPreventDefault {
-				jsEvent.Call("preventDefault")
-			}
-			if l.callStopPropagation {
-				jsEvent.Call("stopPropagation")
-			}
-			l.Listener(&Event{
-				Value:  jsEvent.(wrappedObject).j,
-				Target: jsEvent.Get("target").(wrappedObject).j,
-			})
-			return undefined()
-		})
-	}
-
-	// Properties
-	for name, value := range h.properties {
-		var oldValue interface{}
-		switch name {
-		case "value":
-			oldValue = h.node.Get("value").String()
-		case "checked":
-			oldValue = h.node.Get("checked").Bool()
-		default:
-			oldValue = prev.properties[name]
-		}
-		if value != oldValue {
-			h.node.Set(name, value)
-		}
-	}
-
-	// Attributes
-	for name, value := range h.attributes {
-		if value != prev.attributes[name] {
-			h.node.Call("setAttribute", name, value)
-		}
-	}
-
-	// Classes
-	classList := h.node.Get("classList")
-	for name := range h.classes {
-		if _, ok := prev.classes[name]; !ok {
-			classList.Call("add", name)
-		}
-	}
-
-	// Dataset
-	dataset := h.node.Get("dataset")
-	for name, value := range h.dataset {
-		if value != prev.dataset[name] {
-			dataset.Set(name, value)
-		}
-	}
-
-	// Styles
-	style := h.node.Get("style")
-	for name, value := range h.styles {
-		oldValue := prev.styles[name]
-		if value != oldValue {
-			style.Call("setProperty", name, value)
-		}
-	}
-
-	// Event listeners
-	for _, l := range h.eventListeners {
-		h.node.Call("addEventListener", l.Name, l.wrapper)
-	}
-
-	// InnerHTML
-	if h.innerHTML != prev.innerHTML {
-		h.node.Set("innerHTML", h.innerHTML)
-	}
 }
 
 // removeProperties removes properties/attributes/etc that are no longer
@@ -961,8 +901,6 @@ func copyComponent(c Component) Component {
 		return cpy
 	}
 
-	tinyGoAssertCopier(c)
-
 	// Component does not implement the Copier interface, so perform a shallow
 	// copy.
 	v := reflect.ValueOf(c)
@@ -1182,18 +1120,6 @@ func unmount(e ComponentOrHTML) {
 	if u, ok := e.(Unmounter); ok {
 		u.Unmount()
 	}
-}
-
-// requestAnimationFrame calls the native JS function of the same name.
-func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) {
-	var cb jsFunc
-	cb = funcOf(func(_ jsObject, args []jsObject) interface{} {
-		cb.Release()
-
-		callback(args[0].Float(), send)
-		return undefined()
-	})
-	global().Call("requestAnimationFrame", cb)
 }
 
 // RenderBody renders the given component as the document body. The given

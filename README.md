@@ -24,7 +24,7 @@ That is, <b>m</b>odels <b>a</b>re <b>s</b>tateful <b>c</b>omponents.
 
 Here's a basic Hello World example.
 
-[embedmd]:# (example/hellovecty/hellovecty.go)
+[embedmd]:# (example/hellomasc/hellomasc.go)
 ```go
 package main
 
@@ -49,37 +49,60 @@ func main() {
 
 type ClickMsg struct{}
 
+// InputMsg is sent when the text input changes.
+type InputMsg struct{ Value string }
+
 // PageView is our main page component.
 type PageView struct {
 	masc.Core
 
 	// The model state is the number of clicks
 	clicks int
+	input  string
 }
 
 func (p *PageView) Init() masc.Cmd {
+	p.input = "masc user"
 	return nil
 }
 
 // PageView is a masc.Model; it has Init and Update functions
 func (p *PageView) Update(msg masc.Msg) (masc.Model, masc.Cmd) {
-	switch msg.(type) {
+	switch m := msg.(type) {
 	case ClickMsg:
 		// Update the model state when we get a click message
 		p.clicks++
+	case InputMsg:
+		// Update the model state when input changes
+		p.input = m.Value
 	}
 	return p, nil
 }
 
+// Render implements the masc.Component interface.
 func (p *PageView) Render(send func(masc.Msg)) masc.ComponentOrHTML {
 	return elem.Body(
 		masc.Markup(
-			event.Click(func(_ *masc.Event) {
+			event.Click(func(e *masc.Event) {
 				// Send a click message upon the click event
 				send(ClickMsg{})
 			}),
 		),
-		masc.Text("Hello masc User"+strings.Repeat("!", p.clicks)),
+		// Text input that echoes into the greeting
+		elem.Input(
+			masc.Markup(
+				masc.Property("type", "text"),
+				masc.Property("value", p.input),
+				event.Input(func(e *masc.Event) {
+					// Grab the new value from the event target
+					v := e.Value.Get("target").Get("value").String()
+					send(InputMsg{Value: v})
+				}),
+			),
+		),
+		elem.Break(),
+		// Greeting text includes both input and clicks
+		masc.Text("Hello "+p.input+""+strings.Repeat("!", p.clicks)),
 	)
 }
 ```
@@ -87,3 +110,65 @@ func (p *PageView) Render(send func(masc.Msg)) masc.ComponentOrHTML {
 Additional examples, including a todo app,
 are in the [example](example/) directory.  These can be run using
 [wasmserve](https://github.com/hajimehoshi/wasmserve).
+
+## Pure-Go DOM Testing with gost-dom
+
+To test masc components in pure Go without a browser, you can use [gost-dom/browser](https://github.com/gost-dom/browser).  Under native (non-WASM) builds, masc will render into a gost-dom Window, which you can inspect and drive directly:
+
+```go
+package yourpkg_test
+
+import (
+    "strings"
+    "testing"
+
+    "github.com/gost-dom/browser/html"
+    "github.com/octoberswimmer/masc"
+    "github.com/your/module/foo"
+)
+
+func TestMyWidget(t *testing.T) {
+    // Create a gost-dom window and parse initial HTML
+    win, err := html.NewWindowReader(
+        strings.NewReader("<!DOCTYPE html><html><body></body></html>"),
+    )
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    // Render component with automatic re-render support
+    body, send, err := masc.RenderComponentIntoWithSend(win, foo.NewWidget())
+    if err != nil {
+        t.Fatal(err)
+    }
+
+    // Simulate user interactions:
+    // 1) Click a specific button:
+    btn := win.Document().QuerySelector("button").(html.HTMLElement)
+    btn.Click()
+
+    // 2) Click the body element:
+    body.Click()
+
+    // Inspect the rendered HTML
+    got := body.InnerHTML()
+    want := "<button>Clicked</button><span>1</span>"
+    if got != want {
+        t.Errorf("unexpected HTML: got %s, want %s", got, want)
+    }
+
+    // For input-driven components, dispatch an InputMsg directly:
+    send(foo.InputMsg{Value: "Alice"})
+    got = body.InnerHTML()
+    want = "Hello Alice"
+    if got != want {
+        t.Errorf("after send, HTML = %s; want %s", got, want)
+    }
+}
+```
+
+Then run:
+
+```bash
+go test ./example/...
+```

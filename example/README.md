@@ -2,8 +2,6 @@
 
 Masc examples can be built with the Go 1.14+ WebAssembly compilation target.
 
-Additionally, Masc has [experimental support for the TinyGo compiler]().
-
 ## Building for WebAssembly with Go 1.14+
 
 **Ensure you are running Go 1.14 or higher.** Masc requires Go 1.14+ as it makes use of improvements to the `syscall/js` package which are not present in earlier versions of Go.
@@ -27,9 +25,6 @@ wasmserve
 
 Then navigate to http://localhost:8080/
 
-## Building for TinyGo
-
-TinyGo support is in very early stages still. Please refer to https://github.com/hexops/vecty/issues/269
 
 ## Building with other Go compilers
 
@@ -37,6 +32,9 @@ Other compilers such as [GopherJS](https://github.com/gopherjs) may work so long
 
 Masc currently can only be built to run in web browsers.
 
-## More examples
+## Testing the HelloMasc example
 
-* [soypat's vecty-examples](https://github.com/soypat/vecty-examples), including a snake game and an example of using the [Material Design CSS library](https://material.io/)
+To run the example test, change into the `hellomasc` directory and run:
+
+    cd example/hellomasc
+    go test ./...

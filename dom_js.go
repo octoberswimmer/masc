@@ -159,3 +159,101 @@ func (w wrappedObject) Int() int {
 func (w wrappedObject) Float() float64 {
 	return w.j.Float()
 }
+
+// requestAnimationFrame calls the native JS function of the same name.
+func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) {
+	var cb jsFunc
+	cb = funcOf(func(_ jsObject, args []jsObject) interface{} {
+		cb.Release()
+
+		callback(args[0].Float(), send)
+		return undefined()
+	})
+	global().Call("requestAnimationFrame", cb)
+}
+
+// reconcileProperties updates properties/attributes/etc to match the current
+// element.
+func (h *HTML) reconcileProperties(prev *HTML) {
+	// If nodes match, remove any outdated properties
+	if h.node.Equal(prev.node) {
+		h.removeProperties(prev)
+	}
+
+	// Wrap event listeners
+	for _, l := range h.eventListeners {
+		l := l
+		l.wrapper = funcOf(func(_ jsObject, args []jsObject) interface{} {
+			jsEvent := args[0]
+			if l.callPreventDefault {
+				jsEvent.Call("preventDefault")
+			}
+			if l.callStopPropagation {
+				jsEvent.Call("stopPropagation")
+			}
+			l.Listener(&Event{
+				Value:  jsEvent.(wrappedObject).j,
+				Target: jsEvent.Get("target").(wrappedObject).j,
+			})
+			return undefined()
+		})
+	}
+
+	// Properties
+	for name, value := range h.properties {
+		var oldValue interface{}
+		switch name {
+		case "value":
+			oldValue = h.node.Get("value").String()
+		case "checked":
+			oldValue = h.node.Get("checked").Bool()
+		default:
+			oldValue = prev.properties[name]
+		}
+		if value != oldValue {
+			h.node.Set(name, value)
+		}
+	}
+
+	// Attributes
+	for name, value := range h.attributes {
+		if value != prev.attributes[name] {
+			h.node.Call("setAttribute", name, value)
+		}
+	}
+
+	// Classes
+	classList := h.node.Get("classList")
+	for name := range h.classes {
+		if _, ok := prev.classes[name]; !ok {
+			classList.Call("add", name)
+		}
+	}
+
+	// Dataset
+	dataset := h.node.Get("dataset")
+	for name, value := range h.dataset {
+		if value != prev.dataset[name] {
+			dataset.Set(name, value)
+		}
+	}
+
+	// Styles
+	style := h.node.Get("style")
+	for name, value := range h.styles {
+		oldValue := prev.styles[name]
+		if value != oldValue {
+			style.Call("setProperty", name, value)
+		}
+	}
+
+	// Event listeners
+	for _, l := range h.eventListeners {
+		h.node.Call("addEventListener", l.Name, l.wrapper)
+	}
+
+	// InnerHTML
+	if h.innerHTML != prev.innerHTML {
+		h.node.Set("innerHTML", h.innerHTML)
+	}
+}
