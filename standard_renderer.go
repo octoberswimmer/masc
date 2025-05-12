@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-// standardRenderer uses vecty's rendering model
+// standardRenderer uses vecty's rendering model.
 type standardRenderer struct {
 	rootNode jsObject
 	rendered bool

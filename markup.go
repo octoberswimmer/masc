@@ -207,7 +207,7 @@ func (m MarkupList) Apply(h *HTML) {
 	}
 }
 
-// isMarkupOrChild implements MarkupOrChild
+// isMarkupOrChild implements MarkupOrChild.
 func (m MarkupList) isMarkupOrChild() {}
 
 // Markup wraps a list of Applyer which is individually
@@ -258,7 +258,7 @@ func UnsafeHTML(html string) Applyer {
 // Namespace is Applyer which sets the namespace URI to associate with the
 // created element. This is primarily used when working with, e.g., SVG.
 //
-// See https://developer.mozilla.org/en-US/docs/Web/API/Document/createElementNS#Valid Namespace URIs
+// See https://developer.mozilla.org/en-US/docs/Web/API/Document/createElementNS#Valid Namespace URIs.
 func Namespace(uri string) Applyer {
 	return markupFunc(func(h *HTML) {
 		h.namespace = uri

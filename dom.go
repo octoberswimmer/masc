@@ -4,7 +4,10 @@ import (
 	"reflect"
 )
 
-// batch renderer singleton
+// defaultFrameBudget is the target frame budget in milliseconds (1000ms / 60fps).
+const defaultFrameBudget = 1000.0 / 60.0
+
+// batch renderer singleton.
 var batch = &batchRenderer{idx: make(map[Component]int)}
 
 // Core implements the Context method of the Component interface, and is the
@@ -18,10 +21,10 @@ type Core struct {
 // Context implements the Component interface.
 func (c *Core) Context() *Core { return c }
 
-// isMarkupOrChild implements MarkupOrChild
+// isMarkupOrChild implements MarkupOrChild.
 func (c *Core) isMarkupOrChild() {}
 
-// isComponentOrHTML implements ComponentOrHTML
+// isComponentOrHTML implements ComponentOrHTML.
 func (c *Core) isComponentOrHTML() {}
 
 // Component represents a single visual component within an application. To
@@ -161,10 +164,10 @@ func (h *HTML) Key() interface{} {
 	return h.key
 }
 
-// isMarkupOrChild implements MarkupOrChild
+// isMarkupOrChild implements MarkupOrChild.
 func (h *HTML) isMarkupOrChild() {}
 
-// isComponentOrHTML implements ComponentOrHTML
+// isComponentOrHTML implements ComponentOrHTML.
 func (h *HTML) isComponentOrHTML() {}
 
 // createNode creates a HTML node of the appropriate type and namespace.
@@ -382,6 +385,7 @@ func (h *HTML) reconcileChildren(prev *HTML, send func(Msg)) (pendingMounts []Mo
 		// Ensure children implement the keyer interface consistently, and
 		// populate the keyedChildren map now.
 		//
+		//nolint:godox
 		// TODO(pdf): Add tests for node equality, keyed children
 		var (
 			isNew   = !h.node.Equal(prev.node)
@@ -391,6 +395,7 @@ func (h *HTML) reconcileChildren(prev *HTML, send func(Msg)) (pendingMounts []Mo
 		if hasKeyedChildren && !isKeyer {
 			panic("masc: all siblings must have keys when using keyed elements")
 		}
+		//nolint:nestif
 		if isKeyer {
 			nextKey = keyer.Key()
 			if hasKeyedChildren && nextKey == nil {
@@ -675,10 +680,10 @@ func (h *HTML) insertBefore(node jsObject, child *HTML) {
 // List represents a list of components or HTML.
 type List []ComponentOrHTML
 
-// isMarkupOrChild implements MarkupOrChild
+// isMarkupOrChild implements MarkupOrChild.
 func (l List) isMarkupOrChild() {}
 
-// isComponentOrHTML implements ComponentOrHTML
+// isComponentOrHTML implements ComponentOrHTML.
 func (l List) isComponentOrHTML() {}
 
 // WithKey wraps the List in a Keyer using the given key. List members are
@@ -688,7 +693,7 @@ func (l List) WithKey(key interface{}) KeyedList {
 }
 
 // KeyedList is produced by calling List.WithKey. It has no public behaviour,
-// and List members are no longer accessible once wrapped in this stucture.
+// and List members are no longer accessible once wrapped in this structure.
 type KeyedList struct {
 	// html is used to render a set of children into another element in a
 	// separate context, without requiring a structural element. Keyed children
@@ -698,13 +703,13 @@ type KeyedList struct {
 	key interface{}
 }
 
-// isMarkupOrChild implements MarkupOrChild
+// isMarkupOrChild implements MarkupOrChild.
 func (l KeyedList) isMarkupOrChild() {}
 
-// isComponentOrHTML implements ComponentOrHTML
+// isComponentOrHTML implements ComponentOrHTML.
 func (l KeyedList) isComponentOrHTML() {}
 
-// Key implements the Keyer interface
+// Key implements the Keyer interface.
 func (l KeyedList) Key() interface{} {
 	return l.key
 }
@@ -853,6 +858,8 @@ func (b *batchRenderer) add(c Component, send func(Msg)) {
 
 // render the pending batch.
 // TODO(pdf): Add tests for time budget and multi-pass renders.
+//
+//nolint:godox
 func (b *batchRenderer) render(startTime float64, send func(Msg)) {
 	// If the batch is empty, mark as unscheduled, and stop render cycle.
 	if len(b.batch) == 0 {
@@ -875,7 +882,7 @@ func (b *batchRenderer) render(startTime float64, send func(Msg)) {
 		// Check for remaining time budget, targeting 60fps (~16ms per frame).
 		if i > 0 {
 			elapsed := global().Get("performance").Call("now").Float() - startTime
-			budgetRemaining := (1000 / 60) - elapsed
+			budgetRemaining := defaultFrameBudget - elapsed
 			avgRenderTime := elapsed / float64(i)
 			// If the budget remaining is less than 2 times the average
 			// Component render time, push the remainder of the batch to the
@@ -912,9 +919,11 @@ func extractHTML(e ComponentOrHTML) *HTML {
 		return v
 	case Component:
 		return extractHTML(v.Context().prevRender)
-	default:
-		panic("masc: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(e).String() + ")")
 	}
+	// fallback for unsupported types; will panic
+	panic("masc: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(e).String() + ")")
+	// unreachable
+	return nil //nolint:staticcheck,govet
 }
 
 // sameType returns whether first and second ComponentOrHTML are of the same
@@ -990,7 +999,7 @@ func copyProps(src, dst Component) {
 // 3. nextChild == *HTML && prevChild == nil
 // 4. nextChild == Component && prevChild == Component
 // 5. nextChild == Component && prevChild == *HTML
-// 6. nextChild == Component && prevChild == nil
+// 6. nextChild == Component && prevChild == nil.
 func render(next, prev ComponentOrHTML, send func(Msg)) (nextHTML *HTML, skip bool, pendingMounts []Mounter) {
 	switch v := next.(type) {
 	case *HTML:
@@ -1002,9 +1011,11 @@ func render(next, prev ComponentOrHTML, send func(Msg)) (nextHTML *HTML, skip bo
 		return renderComponent(v, prev, send)
 	case nil:
 		return nil, false, nil
-	default:
-		panic("masc: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(next).String() + ")")
 	}
+	// fallback for unsupported types; will panic
+	panic("masc: internal error (unexpected ComponentOrHTML type " + reflect.TypeOf(next).String() + ")")
+	// unreachable
+	return nil, false, nil //nolint:staticcheck,govet
 }
 
 // renderComponent handles rendering the given Component into *HTML. If skip ==
@@ -1025,6 +1036,7 @@ func renderComponent(next Component, prev ComponentOrHTML, send func(Msg)) (next
 
 	// Before rendering, consult the Component's SkipRender method to see if we
 	// should skip rendering or not.
+	//nolint:nestif
 	if rs, ok := next.(RenderSkipper); ok {
 		prevRenderComponent := next.Context().prevRenderComponent
 		if prevRenderComponent != nil {
@@ -1110,7 +1122,7 @@ func mountUnmount(next, prev ComponentOrHTML) Mounter {
 	return nil
 }
 
-// mount all pending Mounters
+// mount all pending Mounters.
 func mount(pendingMounts ...Mounter) {
 	for _, mounter := range pendingMounts {
 		if mounter == nil {

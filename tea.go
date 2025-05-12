@@ -228,7 +228,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 								})
 							}
 
-							//nolint:errcheck
+							//nolint:errcheck,gosec
 							g.Wait() // wait for all commands from batch msg to finish
 							continue
 						}
