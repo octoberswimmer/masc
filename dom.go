@@ -143,12 +143,14 @@ type HTML struct {
 	node jsObject
 
 	namespace, tag, text, innerHTML string
-	classes                         map[string]struct{}
-	styles, dataset                 map[string]string
-	properties, attributes          map[string]interface{}
-	eventListeners                  []*EventListener
-	children                        []ComponentOrHTML
-	key                             interface{}
+	// scrollIntoView flags whether this element should be scrolled into view when mounted.
+	scrollIntoView         bool
+	classes                map[string]struct{}
+	styles, dataset        map[string]string
+	properties, attributes map[string]interface{}
+	eventListeners         []*EventListener
+	children               []ComponentOrHTML
+	key                    interface{}
 	// keyedChildren stores a map of keys to children, for keyed reconciliation.
 	keyedChildren map[interface{}]ComponentOrHTML
 	// insertBeforeNode tracks the DOM node that elements should be inserted
@@ -169,6 +171,17 @@ func (h *HTML) isMarkupOrChild() {}
 
 // isComponentOrHTML implements ComponentOrHTML.
 func (h *HTML) isComponentOrHTML() {}
+
+// Mount implements the Mounter interface for HTML elements.
+// It scrolls the element into view if marked with ScrollIntoView markup.
+func (h *HTML) Mount() {
+	if h.scrollIntoView {
+		h.node.Call("scrollIntoView", map[string]interface{}{ // only scroll if out of view
+			"block":  "nearest",
+			"inline": "nearest",
+		})
+	}
+}
 
 // createNode creates a HTML node of the appropriate type and namespace.
 func (h *HTML) createNode() {
