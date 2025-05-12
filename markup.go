@@ -264,3 +264,10 @@ func Namespace(uri string) Applyer {
 		h.namespace = uri
 	})
 }
+
+// ScrollIntoView returns an Applyer which scrolls the element into view when it is mounted.
+func ScrollIntoView() Applyer {
+	return markupFunc(func(h *HTML) {
+		h.scrollIntoView = true
+	})
+}

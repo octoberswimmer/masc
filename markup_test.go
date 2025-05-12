@@ -11,3 +11,11 @@ func TestNamespace(t *testing.T) {
 		t.Fatalf("got namespace %q want %q", h.namespace, want)
 	}
 }
+
+// TestScrollIntoView ensures the ScrollIntoView markup sets the scroll flag on the element.
+func TestScrollIntoView(t *testing.T) {
+	h := Tag("a", Markup(ScrollIntoView()))
+	if !h.scrollIntoView {
+		t.Fatal("expected scrollIntoView to be true")
+	}
+}
