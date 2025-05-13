@@ -5,6 +5,7 @@ package masc
 
 import (
 	"fmt"
+
 	ev "github.com/gost-dom/browser/dom/event"
 	"github.com/gost-dom/browser/html"
 )
@@ -38,7 +39,7 @@ func (b Body) Dispatch(selector, eventType string) error {
 		return fmt.Errorf("query selector %q error: %w", selector, err)
 	}
 	// Create a gost-dom Event and dispatch
-	ge := &gostEvent{ev: ev.New(eventType, nil)}
+	ge := &gostEvent{ev: &ev.Event{Type: eventType}}
 	WrapGostNode(node).Call("dispatchEvent", ge)
 	return nil
 }
@@ -59,9 +60,7 @@ func RenderComponentInto(win html.Window, m Model) (Body, error) {
 	var send func(Msg)
 	send = func(msg Msg) {
 		updated, _ := model.Update(msg)
-		if nm, ok := updated.(Model); ok {
-			model = nm
-		}
+		model = updated
 		// Re-query the <body> element and wrap as root
 		body = win.Document().Body()
 		root = WrapGostNode(body)
@@ -90,9 +89,7 @@ func RenderComponentIntoWithSend(win html.Window, m Model) (Body, func(Msg), err
 	var send func(Msg)
 	send = func(msg Msg) {
 		updated, _ := model.Update(msg)
-		if nm, ok := updated.(Model); ok {
-			model = nm
-		}
+		model = updated
 		// Re-query and wrap the current <body> element before re-render
 		bodyNode := win.Document().Body()
 		root = WrapGostNode(bodyNode)

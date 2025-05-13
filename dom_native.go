@@ -201,7 +201,8 @@ func (g *gostWrapper) Set(key string, value interface{}) {
 	switch key {
 	case "innerHTML":
 		if el, ok := g.n.(dom.Element); ok {
-			el.SetInnerHTML(value.(string))
+			// ignore error
+			_ = el.SetInnerHTML(value.(string))
 		}
 	case "nodeValue":
 		g.n.SetTextContent(value.(string))
@@ -246,7 +247,8 @@ func (g *gostWrapper) Delete(key string) {
 	switch key {
 	case "innerHTML":
 		if el, ok := g.n.(dom.Element); ok {
-			el.SetInnerHTML("")
+			// ignore error
+			_ = el.SetInnerHTML("")
 		}
 	default:
 		if el, ok := g.n.(dom.Element); ok {
@@ -258,22 +260,26 @@ func (g *gostWrapper) Call(name string, args ...interface{}) jsObject {
 	switch name {
 	case "appendChild":
 		child := args[0].(*gostWrapper).n
-		g.n.AppendChild(child)
+		// ignore returned node and error
+		_, _ = g.n.AppendChild(child)
 		return args[0].(*gostWrapper)
 	case "removeChild":
 		child := args[0].(*gostWrapper).n
-		g.n.RemoveChild(child)
+		// ignore returned node and error
+		_, _ = g.n.RemoveChild(child)
 		return args[0].(*gostWrapper)
 	case "replaceChild":
 		child := args[0].(*gostWrapper).n
 		old := args[1].(*gostWrapper).n
-		g.n.InsertBefore(child, old)
-		g.n.RemoveChild(old)
+		// ignore returned node and error
+		_, _ = g.n.InsertBefore(child, old)
+		_, _ = g.n.RemoveChild(old)
 		return &gostWrapper{n: child}
 	case "insertBefore":
 		child := args[0].(*gostWrapper).n
 		ref := args[1].(*gostWrapper).n
-		g.n.InsertBefore(child, ref)
+		// ignore returned node and error
+		_, _ = g.n.InsertBefore(child, ref)
 		return args[0].(*gostWrapper)
 	case "createElement":
 		tag := args[0].(string)
