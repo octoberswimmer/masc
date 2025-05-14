@@ -5,7 +5,7 @@ go 1.23.6
 toolchain go1.24.2
 
 require (
-	github.com/gost-dom/browser v0.5.7
+	github.com/gost-dom/browser v0.5.8
 	golang.org/x/sync v0.6.0
 )
 
