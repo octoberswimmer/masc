@@ -60,7 +60,7 @@ This document outlines the steps needed to build a full-DOM, pure-Go test harnes
 
 ## 12. Attributes, classes, styles, dataset
 - [x] Wire up `classList` API on elements (implemented `classList` property and `add` method in `dom_native.go`).
-- [ ] Wire up `style` and `dataset` APIs on elements and write tests for attribute diffs.
+- [x] Wire up `style` and `dataset` APIs on elements and write tests for attribute diffs.
 
 ## 13. Form elements & two-way binding
 - [x] Support `<input>` value property and checked property

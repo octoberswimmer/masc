@@ -238,6 +238,12 @@ func (g *gostWrapper) Get(key string) jsObject {
 	case "classList":
 		// Return the element itself as a pseudo-classList for native support
 		return &gostWrapper{n: g.n}
+	case "dataset":
+		// Return proxy for data-* attributes
+		return &gostDatasetWrapper{n: g.n}
+	case "style":
+		// Return proxy for CSS style operations
+		return &gostStyleWrapper{n: g.n}
 	}
 	if el, ok := g.n.(dom.Element); ok {
 		val, _ := el.GetAttribute(key)
@@ -492,6 +498,122 @@ func (g *gostNodeList) IsUndefined() bool { return false }
 func (g *gostNodeList) Bool() bool        { return false }
 func (g *gostNodeList) Int() int          { return g.list.Length() }
 func (g *gostNodeList) Float() float64    { return float64(g.list.Length()) }
+
+// gostDatasetWrapper implements jsObject for element.dataset (data-* attributes).
+type gostDatasetWrapper struct {
+	n dom.Node
+}
+
+func (d *gostDatasetWrapper) Set(key string, value interface{}) {
+	if el, ok := d.n.(dom.Element); ok {
+		el.SetAttribute("data-"+key, fmt.Sprint(value))
+	}
+}
+
+func (d *gostDatasetWrapper) Get(key string) jsObject {
+	if el, ok := d.n.(dom.Element); ok {
+		val, _ := el.GetAttribute("data-" + key)
+		return &stringObject{s: val}
+	}
+	return nil
+}
+
+func (d *gostDatasetWrapper) Delete(key string) {
+	if el, ok := d.n.(dom.Element); ok {
+		el.RemoveAttribute("data-" + key)
+	}
+}
+
+func (d *gostDatasetWrapper) Call(name string, args ...interface{}) jsObject {
+	return nil
+}
+
+func (d *gostDatasetWrapper) String() string { return "[gostdom dataset]" }
+func (d *gostDatasetWrapper) Truthy() bool   { return true }
+func (d *gostDatasetWrapper) Equal(o jsObject) bool {
+	other, ok := o.(*gostDatasetWrapper)
+	return ok && d.n == other.n
+}
+func (d *gostDatasetWrapper) IsUndefined() bool { return false }
+func (d *gostDatasetWrapper) Bool() bool        { return false }
+func (d *gostDatasetWrapper) Int() int          { return 0 }
+func (d *gostDatasetWrapper) Float() float64    { return 0 }
+
+// gostStyleWrapper implements jsObject for element.style operations.
+type gostStyleWrapper struct {
+	n dom.Node
+}
+
+func (s *gostStyleWrapper) Set(key string, value interface{}) {}
+func (s *gostStyleWrapper) Get(key string) jsObject           { return nil }
+func (s *gostStyleWrapper) Delete(key string)                 {}
+
+func (s *gostStyleWrapper) Call(name string, args ...interface{}) jsObject {
+	if el, ok := s.n.(dom.Element); ok {
+		switch name {
+		case "setProperty":
+			prop := args[0].(string)
+			val := fmt.Sprint(args[1])
+			existing, _ := el.GetAttribute("style")
+			updated := existing
+			if updated != "" && !strings.HasSuffix(updated, ";") {
+				updated += ";"
+			}
+			updated += prop + ":" + val + ";"
+			el.SetAttribute("style", updated)
+		case "removeProperty":
+			// Remove CSS property from the style attribute
+			key := args[0].(string)
+			existing, _ := el.GetAttribute("style")
+			// Split on semicolon
+			parts := strings.Split(existing, ";")
+			var kept []string
+			for _, part := range parts {
+				part = strings.TrimSpace(part)
+				if part == "" {
+					continue
+				}
+				// property:value
+				idx := strings.Index(part, ":")
+				if idx < 0 {
+					// malformed? just keep it
+					kept = append(kept, part)
+					continue
+				}
+				pkey := strings.TrimSpace(part[:idx])
+				if pkey == key {
+					// drop this declaration
+					continue
+				}
+				kept = append(kept, part)
+			}
+			// re-join
+			newStyle := ""
+			for i, part := range kept {
+				if i > 0 {
+					newStyle += ";"
+				}
+				newStyle += part
+			}
+			if newStyle != "" {
+				newStyle += ";"
+			}
+			el.SetAttribute("style", newStyle)
+		}
+	}
+	return nil
+}
+
+func (s *gostStyleWrapper) String() string { return "[gostdom style]" }
+func (s *gostStyleWrapper) Truthy() bool   { return true }
+func (s *gostStyleWrapper) Equal(o jsObject) bool {
+	other, ok := o.(*gostStyleWrapper)
+	return ok && s.n == other.n
+}
+func (s *gostStyleWrapper) IsUndefined() bool { return false }
+func (s *gostStyleWrapper) Bool() bool        { return false }
+func (s *gostStyleWrapper) Int() int          { return 0 }
+func (s *gostStyleWrapper) Float() float64    { return 0 }
 
 // gostEvent wraps a gost-dom Event so it can be passed through dispatchEvent.
 // It implements jsObject over ev.Event.

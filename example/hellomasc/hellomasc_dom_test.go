@@ -72,3 +72,39 @@ func TestPageViewClick(t *testing.T) {
 		t.Errorf("after click, greeting not updated; got %q", got)
 	}
 }
+
+func TestDatasetAndStyleProxy(t *testing.T) {
+	win, err := html.NewWindowReader(strings.NewReader("<!DOCTYPE html><html><body></body></html>"))
+	if err != nil {
+		t.Fatalf("failed to create gost-dom window: %v", err)
+	}
+	// Configure masc to use gost-dom on this window
+	masc.UseGostDOM(win)
+	// Wrap the <body> element for jsObject operations
+	root := masc.WrapGostNode(win.Document().Body())
+
+	// --- Dataset proxy ---
+	ds := root.Get("dataset")
+	ds.Set("foo", "bar")
+	val, ok := win.Document().Body().GetAttribute("data-foo")
+	if !ok || val != "bar" {
+		t.Errorf("dataset.Set failed: got %q, want %q", val, "bar")
+	}
+	ds.Delete("foo")
+	if _, ok := win.Document().Body().GetAttribute("data-foo"); ok {
+		t.Errorf("dataset.Delete failed: data-foo still present")
+	}
+
+	// --- Style proxy ---
+	style := root.Get("style")
+	style.Call("setProperty", "background", "blue")
+	css, _ := win.Document().Body().GetAttribute("style")
+	if !strings.Contains(css, "background:blue") {
+		t.Errorf("style.setProperty failed: got %q, want to contain %q", css, "background:blue")
+	}
+	style.Call("removeProperty", "background")
+	css2, _ := win.Document().Body().GetAttribute("style")
+	if strings.Contains(css2, "background:blue") {
+		t.Errorf("style.removeProperty failed: got %q, still contains %q", css2, "background:blue")
+	}
+}
