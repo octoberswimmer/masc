@@ -235,6 +235,9 @@ func (g *gostWrapper) Get(key string) jsObject {
 			val, _ := el.GetAttribute("value")
 			return &stringObject{s: val}
 		}
+	case "classList":
+		// Return the element itself as a pseudo-classList for native support
+		return &gostWrapper{n: g.n}
 	}
 	if el, ok := g.n.(dom.Element); ok {
 		val, _ := el.GetAttribute(key)
@@ -258,6 +261,19 @@ func (g *gostWrapper) Delete(key string) {
 }
 func (g *gostWrapper) Call(name string, args ...interface{}) jsObject {
 	switch name {
+	case "add":
+		// Handle classList.add on native: add CSS class by updating class attribute
+		if el, ok := g.n.(dom.Element); ok {
+			cls := args[0].(string)
+			current, _ := el.GetAttribute("class")
+			updated := current
+			if updated != "" {
+				updated += " "
+			}
+			updated += cls
+			el.SetAttribute("class", updated)
+		}
+		return nil
 	case "appendChild":
 		child := args[0].(*gostWrapper).n
 		// ignore returned node and error

@@ -149,6 +149,14 @@ func TestMyWidget(t *testing.T) {
 
     // 2) Click the body element:
     body.Click()
+    // 3) Add a CSS class to the button:
+    btn.Get("classList").Call("add", "active")
+    // Inspect the class attribute
+    cls := btn.Get("class").String()
+    wantCls := "active"
+    if cls != wantCls {
+        t.Errorf("unexpected class attribute: got %s, want %s", cls, wantCls)
+    }
 
     // Inspect the rendered HTML
     got := body.InnerHTML()
