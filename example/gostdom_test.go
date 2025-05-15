@@ -16,6 +16,78 @@ type lifeComp struct {
 	onUnmount *int
 }
 
+// cmdComp demonstrates a simple Cmd→Msg→Update→re-render workflow.
+// It issues an "inc" Msg on Init, increments its counter on Update,
+// then issues a Quit Msg to terminate the program.
+type cmdComp struct {
+	masc.Core
+	count int
+}
+
+func (c *cmdComp) Init() masc.Cmd {
+	// On init, send "inc" message
+	return func() masc.Msg { return "inc" }
+}
+
+func (c *cmdComp) Update(msg masc.Msg) (masc.Model, masc.Cmd) {
+	if s, ok := msg.(string); ok && s == "inc" {
+		c.count++
+		// After incrementing, quit the program
+		return c, func() masc.Msg { return masc.Quit() }
+	}
+	return c, nil
+}
+
+func (c *cmdComp) Render(send func(masc.Msg)) masc.ComponentOrHTML {
+	// Render a <div> with a data-count property
+	return elem.Div(masc.Markup(masc.Property("data-count", c.count)))
+}
+
+// TestCmdMsgWorkflow tests end-to-end Cmd and Msg handling in a masc.Program.
+func TestCmdMsgWorkflow(t *testing.T) {
+	win, err := html.NewWindowReader(strings.NewReader("<!DOCTYPE html><html><body></body></html>"))
+	if err != nil {
+		t.Fatalf("failed to create gost-dom window: %v", err)
+	}
+	masc.UseGostDOM(win)
+
+	// Create a <div> and attach
+	doc := win.Document()
+	div := doc.CreateElement("div")
+	if _, err := doc.Body().AppendChild(div); err != nil {
+		t.Fatalf("failed to append div to body: %v", err)
+	}
+	// Run program targeting our <div>
+	comp := &cmdComp{}
+	program := masc.NewProgram(comp, masc.RenderTo(masc.WrapGostNode(div)))
+	done := make(chan struct{})
+	var runErr error
+	go func() {
+		_, runErr = program.Run()
+		close(done)
+	}()
+	// Wait for program to finish (Quit after one update)
+	<-done
+	if runErr != nil {
+		t.Fatalf("program run error: %v", runErr)
+	}
+	// Query the current <div> in the document and verify its data-count attribute is "1"
+	el, err := win.Document().QuerySelector("div")
+	if err != nil {
+		t.Fatalf("query selector error: %v", err)
+	}
+	if el == nil {
+		t.Fatal("expected a <div> element in document, found none")
+	}
+	val, ok := el.GetAttribute("data-count")
+	if !ok {
+		t.Fatalf("expected data-count attribute after Cmd, got none")
+	}
+	if val != "1" {
+		t.Errorf("expected data-count=1 after Cmd, got %q", val)
+	}
+}
+
 // Implement lifecycle methods.
 func (l *lifeComp) Init() masc.Cmd                             { return nil }
 func (l *lifeComp) Update(msg masc.Msg) (masc.Model, masc.Cmd) { return l, nil }

@@ -74,23 +74,23 @@ This document outlines the steps needed to build a full-DOM, pure-Go test harnes
 - [x] Verify that `SkipRender` prevents DOM updates when props/state are unchanged.
 
 ## 16. Command & message handling
-- [ ] Simulate `Cmd` and `Msg` workflows (e.g., event → `send` → `Update` → re-render) end-to-end.
+- [x] Simulate `Cmd` and `Msg` workflows (e.g., event → `send` → `Update` → re-render) end-to-end.
 
 ## 17. Nested component composition
-- [ ] Test components that render other components to ensure proper sub-tree rendering and event propagation.
+- [x] Test components that render other components to ensure proper sub-tree rendering and event propagation.
 
 ## 18. Edge cases & error paths
-- [ ] Test invalid targets (`InvalidTargetError`), mismatched tags (`ElementMismatchError`), and nil renders.
+- [x] Test invalid targets (`InvalidTargetError`), mismatched tags (`ElementMismatchError`), and nil renders.
 
 ## 19. API completeness
-- [ ] Implement `jsObject.Bool()`, `Int()`, `Float()`, and other conversions for property/attribute access.
+- [x] Implement `jsObject.Bool()`, `Int()`, `Float()`, and other conversions for property/attribute access.
 
 ## 20. DOM Events Integration
 - [ ] Refactor `wrappedObject` vs. `gostWrapper`: consolidate to a single `jsObject` wrapper and remove redundant casts.
 - [ ] Ensure the wrapper implements all `jsObject` methods so event callbacks receive a valid object.
-- [ ] Implement correct `Call("addEventListener", ...)` / `Call("removeEventListener", ...)` mapping to `ev.EventTarget` handlers.
-- [ ] Support `preventDefault` and `stopPropagation` flags by calling `evt.PreventDefault()` and `evt.StopPropagation()` in callback.
-- [ ] Use `requestAnimationFrame` to schedule auto-renders after event dispatch (no manual re-render calls).
+- [x] Implement correct `Call("addEventListener", ...)` / `Call("removeEventListener", ...)` mapping to `ev.EventTarget` handlers.
+- [x] Support `preventDefault` and `stopPropagation` flags by calling `evt.PreventDefault()` and `evt.StopPropagation()` in callback.
+- [x] Use `requestAnimationFrame` to schedule auto-renders after event dispatch (no manual re-render calls).
 
 ## 21. Cleanup
 *Note:* Since we no longer use a separate gostdom build tag, all native DOM testing support lives in `dom_native.go` under `//go:build !js`.
