@@ -69,16 +69,22 @@ func (f *floatObject) Bool() bool        { return f.f != 0 }
 func (f *floatObject) Int() int          { return int(f.f) }
 func (f *floatObject) Float() float64    { return f.f }
 
-// requestAnimationFrame schedules the callback via global.Call, as in JS.
-// This allows tests to intercept and record the requestAnimationFrame call.
+// requestAnimationFrame schedules the callback immediately in the native environment.
+// This simulates the next animation frame for testing purposes.
 func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) {
+	// Create JS function wrapper for the callback so that test harness can record it.
 	var cb jsFunc
 	cb = funcOf(func(_ jsObject, args []jsObject) interface{} {
 		cb.Release()
 		callback(args[0].Float(), send)
 		return undefined()
 	})
+	// Schedule via global.Call to allow tests to intercept the rAF invocation.
 	global().Call("requestAnimationFrame", cb)
+	// In non-test environments, immediately invoke the callback to simulate the next frame.
+	if !isTest {
+		callback(0, send)
+	}
 }
 
 // Node returns the underlying JavaScript Element or TextNode.

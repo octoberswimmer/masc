@@ -53,10 +53,10 @@ This document outlines the steps needed to build a full-DOM, pure-Go test harnes
 - [x] Shim `requestAnimationFrame` to trigger batched rerenders in the gost-dom event loop.
 
 ## 10. replaceChild vs appendChild
-- [ ] Implement and test `replaceChild` in `gostWrapper.Call` so that `replaceNode` works correctly.
+- [x] Implement and test `replaceChild` in `gostWrapper.Call` so that `replaceNode` works correctly.
 
 ## 11. insertBefore & keyed lists
-- [ ] Support `insertBefore` and keyed list reconciliation (`KeyedList`, `List`).
+- [x] Support `insertBefore` and keyed list reconciliation (`KeyedList`, `List`).
 
 ## 12. Attributes, classes, styles, dataset
 - [x] Wire up `classList` API on elements (implemented `classList` property and `add` method in `dom_native.go`).
@@ -68,10 +68,10 @@ This document outlines the steps needed to build a full-DOM, pure-Go test harnes
 - [x] Test controlled inputs end-to-end using `dispatchEvent`
 
 ## 14. Lifecycle hooks
-- [ ] Test `Mounter` and `Unmounter` callbacks on mount and unmount of components.
+- [x] Test `Mounter` and `Unmounter` callbacks on mount and unmount of components.
 
 ## 15. SkipRender / Pure components
-- [ ] Verify that `SkipRender` prevents DOM updates when props/state are unchanged.
+- [x] Verify that `SkipRender` prevents DOM updates when props/state are unchanged.
 
 ## 16. Command & message handling
 - [ ] Simulate `Cmd` and `Msg` workflows (e.g., event → `send` → `Update` → re-render) end-to-end.
