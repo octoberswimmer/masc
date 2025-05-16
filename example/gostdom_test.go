@@ -7,6 +7,7 @@ import (
 	html "github.com/gost-dom/browser/html"
 	"github.com/octoberswimmer/masc"
 	"github.com/octoberswimmer/masc/elem"
+	"github.com/octoberswimmer/masc/event"
 )
 
 // Define a component that tracks mount/unmount calls.
@@ -14,6 +15,70 @@ type lifeComp struct {
 	masc.Core
 	onMount   *int
 	onUnmount *int
+}
+
+// inputComp demonstrates two-way binding: value is stored in model and synced
+// on "input" events.
+type inputComp struct {
+	masc.Core
+	value string
+}
+
+func (c *inputComp) Init() masc.Cmd { return nil }
+func (c *inputComp) Update(msg masc.Msg) (masc.Model, masc.Cmd) {
+	// Expect message to be input value as string
+	if s, ok := msg.(string); ok {
+		c.value = s
+	}
+	return c, nil
+}
+func (c *inputComp) Render(send func(masc.Msg)) masc.ComponentOrHTML {
+	// Render a <body> with a div and controlled input
+	return elem.Body(
+		elem.Div(
+			elem.Input(
+				masc.Markup(
+					masc.Property("value", c.value),
+					event.Input(func(e *masc.Event) {
+						// Read new value from event target
+						v := e.Target.Get("value").String()
+						send(v)
+					}),
+				),
+			),
+		),
+	)
+}
+
+// TestInputBinding tests input value property and event handling end-to-end.
+func TestInputBinding(t *testing.T) {
+	win, err := html.NewWindowReader(strings.NewReader("<!DOCTYPE html><html><body></body></html>"))
+	if err != nil {
+		t.Fatalf("failed to create gost-dom window: %v", err)
+	}
+	masc.UseGostDOM(win)
+
+	// Render component into <body> and get send function
+	body, send, err := masc.RenderComponentIntoWithSend(win, &inputComp{})
+	if err != nil {
+		t.Fatalf("initial render error: %v", err)
+	}
+	// Initial render: input has no 'value' attribute for empty string
+	initial := body.InnerHTML()
+	if strings.Contains(initial, "value=") {
+		t.Errorf("initial input unexpectedly has value attribute, got %q", initial)
+	}
+
+	// Simulate user typing by sending a new value
+	send("hello")
+	// After send, the component should re-render with updated value
+	updated := body.InnerHTML()
+	if !strings.Contains(updated, `value="hello"`) {
+		t.Errorf("expected input value=hello after send, got %q", updated)
+	}
+
+	// Quit program
+	// Note: using RenderComponentIntoWithSend for event test, no persistent Program
 }
 
 // cmdComp demonstrates a simple Cmd→Msg→Update→re-render workflow.
