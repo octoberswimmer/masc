@@ -17,6 +17,65 @@ type lifeComp struct {
 	onUnmount *int
 }
 
+// childComp renders a <span> with a data-value attribute.
+type childComp struct {
+	masc.Core
+	value string
+}
+
+func (c *childComp) Init() masc.Cmd                             { return nil }
+func (c *childComp) Update(msg masc.Msg) (masc.Model, masc.Cmd) { return c, nil }
+func (c *childComp) Render(send func(masc.Msg)) masc.ComponentOrHTML {
+	return elem.Span(masc.Markup(masc.Property("data-value", c.value)))
+}
+
+// parentComp2 renders its child component, and on update removes it.
+type parentComp2 struct {
+	masc.Core
+	child *childComp
+}
+
+func (p *parentComp2) Init() masc.Cmd { return nil }
+func (p *parentComp2) Update(msg masc.Msg) (masc.Model, masc.Cmd) {
+	p.child = nil
+	return p, nil
+}
+func (p *parentComp2) Render(send func(masc.Msg)) masc.ComponentOrHTML {
+	// Render into <body>: wrap child in a div when present
+	if p.child != nil {
+		return elem.Body(elem.Div(p.child))
+	}
+	return elem.Body()
+}
+
+// TestNestedComposition tests nested component rendering and update removal.
+func TestNestedComposition(t *testing.T) {
+	win, err := html.NewWindowReader(strings.NewReader("<!DOCTYPE html><html><body></body></html>"))
+	if err != nil {
+		t.Fatalf("failed to create gost-dom window: %v", err)
+	}
+	masc.UseGostDOM(win)
+
+	// Perform initial render into the document body
+	child := &childComp{value: "foo"}
+	parent := &parentComp2{child: child}
+	body, send, err := masc.RenderComponentIntoWithSend(win, parent)
+	if err != nil {
+		t.Fatalf("initial render error: %v", err)
+	}
+	// Check that <span data-value="foo"> is present
+	htmlBefore := body.InnerHTML()
+	if !strings.Contains(htmlBefore, `data-value="foo"`) {
+		t.Errorf("expected nested child before update, got %q", htmlBefore)
+	}
+	// Trigger update to remove child
+	send(nil)
+	htmlAfter := body.InnerHTML()
+	if strings.Contains(htmlAfter, `data-value="foo"`) {
+		t.Errorf("expected child removed after update, got %q", htmlAfter)
+	}
+}
+
 // inputComp demonstrates two-way binding: value is stored in model and synced
 // on "input" events.
 type inputComp struct {
