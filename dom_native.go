@@ -29,6 +29,51 @@ type Event struct {
 	Target SyscallJSValue
 }
 
+// Get retrieves a property from the event object.
+func (e *Event) Get(key string) SyscallJSValue {
+	return SyscallJSValue(e.Value.(jsObject).Get(key))
+}
+
+// String returns the string representation of the event.
+func (e *Event) String() string {
+	return e.Value.(jsObject).String()
+}
+
+// Bool returns the boolean representation of the event.
+func (e *Event) Bool() bool {
+	return e.Value.(jsObject).Bool()
+}
+
+// Int returns the integer representation of the event.
+func (e *Event) Int() int {
+	return e.Value.(jsObject).Int()
+}
+
+// Float returns the float representation of the event.
+func (e *Event) Float() float64 {
+	return e.Value.(jsObject).Float()
+}
+
+// IsUndefined returns whether the event is undefined.
+func (e *Event) IsUndefined() bool {
+	return e.Value.(jsObject).IsUndefined()
+}
+
+// Equal checks if two events are equal.
+func (e *Event) Equal(other SyscallJSValue) bool {
+	return e.Value.(jsObject).Equal(other.(jsObject))
+}
+
+// Set sets a property on the event object.
+func (e *Event) Set(key string, value interface{}) {
+	e.Value.(jsObject).Set(key, value)
+}
+
+// Call calls a method on the event object.
+func (e *Event) Call(method string, args ...interface{}) SyscallJSValue {
+	return SyscallJSValue(e.Value.(jsObject).Call(method, args...))
+}
+
 // gostPerformance implements jsObject for performance.now()
 type gostPerformance struct{}
 
@@ -631,11 +676,24 @@ func (e *gostEvent) Set(key string, value interface{}) {}
 func (e *gostEvent) Delete(key string)                 {}
 
 func (e *gostEvent) Get(key string) jsObject {
-	if key == "value" {
+	switch key {
+	case "value":
 		if el, ok := e.ev.Target().(dom.Element); ok {
 			val, _ := el.GetAttribute("value")
 			return &stringObject{s: val}
 		}
+	case "key":
+		// Stub for keyboard events in native build - will be properly handled in JS/WASM
+		return &stringObject{s: ""}
+	case "keyCode":
+		// Stub for keyboard events in native build - will be properly handled in JS/WASM
+		return &floatObject{f: 0}
+	case "which":
+		// Stub for keyboard events in native build - will be properly handled in JS/WASM
+		return &floatObject{f: 0}
+	case "code":
+		// Stub for keyboard events in native build - will be properly handled in JS/WASM
+		return &stringObject{s: ""}
 	}
 	return nil
 }
