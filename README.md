@@ -108,8 +108,33 @@ func (p *PageView) Render(send func(masc.Msg)) masc.ComponentOrHTML {
 ```
 
 Additional examples, including a todo app,
-are in the [example](example/) directory.  These can be run using
-[wasmserve](https://github.com/hajimehoshi/wasmserve).
+are in the [example](example/) directory.
+
+## Running Examples with the masc CLI
+
+The recommended way to run masc applications is using the built-in `masc serve` command:
+
+```bash
+# Install the masc CLI
+go install github.com/octoberswimmer/masc/cmd/masc@latest
+
+# Serve the hello world example
+masc serve ./example/hellomasc/
+
+# Serve with custom port
+masc serve -p 3000 ./example/hellomasc/
+```
+
+The `masc serve` command:
+- Automatically builds your Go application to WebAssembly
+- Serves the application on a local development server (default port 8000)
+- Watches for file changes and automatically rebuilds
+- Opens your default browser to the application
+- Supports Go workspaces and handles module dependencies intelligently
+
+### Alternative: Using wasmserve
+
+Examples can also be run using [wasmserve](https://github.com/hajimehoshi/wasmserve) for manual WebAssembly builds.
 
 ## Pure-Go DOM Testing with gost-dom
 
