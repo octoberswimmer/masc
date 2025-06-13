@@ -9,14 +9,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"runtime/debug"
 	"sync"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 )
 
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
 var ErrProgramKilled = errors.New("program was killed")
+
+// Yield pauses execution to allow the UI to update and remain responsive.
+// This should be called periodically during CPU-intensive computations
+// to prevent blocking the UI thread. It yields for approximately one
+// animation frame duration (~16ms) to ensure smooth rendering.
+func Yield() {
+	runtime.Gosched()
+	time.Sleep(16 * time.Millisecond)
+}
 
 // Msg contain data from the result of a IO operation. Msgs trigger the update
 // function and, henceforth, the UI.
@@ -243,8 +254,14 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			var cmd Cmd
 			model, cmd = model.Update(msg)   // run update
-			cmds <- cmd                      // process command (if any)
-			p.renderer.render(model, p.Send) // send view to renderer
+			p.renderer.render(model, p.Send) // send view to renderer first
+
+			// Schedule command to run after next frame render for better INP
+			if cmd != nil {
+				requestAnimationFrame(func(float64, func(Msg)) {
+					cmds <- cmd // run command after UI updates
+				}, p.Send)
+			}
 		}
 	}
 }
