@@ -20,6 +20,9 @@ import (
 // ErrProgramKilled is returned by [Program.Run] when the program got killed.
 var ErrProgramKilled = errors.New("program was killed")
 
+// currentProgram holds a reference to the currently running program for panic handling
+var currentProgram *Program
+
 // Yield pauses execution to allow the UI to update and remain responsive.
 // This should be called periodically during CPU-intensive computations
 // to prevent blocking the UI thread. It yields for approximately one
@@ -120,7 +123,8 @@ type Program struct {
 
 	ignoreSignals uint32
 
-	filter func(Model, Msg) Msg
+	filter       func(Model, Msg) Msg
+	panicHandler func(interface{})
 }
 
 // Quit is a special command that tells the Bubble Tea program to exit.
@@ -132,11 +136,18 @@ func Quit() Msg {
 // Quit.
 type QuitMsg struct{}
 
+// defaultPanicHandler is the default panic handler that prints to stdout
+func defaultPanicHandler(r interface{}) {
+	fmt.Printf("Caught panic:\n\n%s\n\n", r)
+	debug.PrintStack()
+}
+
 // NewProgram creates a new Program.
 func NewProgram(model Model, opts ...ProgramOption) *Program {
 	p := &Program{
 		initialModel: model,
 		msgs:         make(chan Msg),
+		panicHandler: defaultPanicHandler, // Set default panic handler
 	}
 
 	// Apply all options to the program.
@@ -270,6 +281,12 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 // terminated by either [Program.Quit], [Program.Kill], or its signal handler.
 // Returns the final model.
 func (p *Program) Run() (Model, error) {
+	// Set the current program for panic handling in callbacks
+	currentProgram = p
+	defer func() {
+		currentProgram = nil
+	}()
+
 	handlers := handlers{}
 	cmds := make(chan Cmd)
 	p.errs = make(chan error)
@@ -282,8 +299,7 @@ func (p *Program) Run() (Model, error) {
 		defer func() {
 			if r := recover(); r != nil {
 				p.shutdown()
-				fmt.Printf("Caught panic:\n\n%s\n\nRestoring terminal...\n\n", r)
-				debug.PrintStack()
+				p.panicHandler(r)
 				return
 			}
 		}()

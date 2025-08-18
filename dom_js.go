@@ -3,7 +3,11 @@
 
 package masc
 
-import "syscall/js"
+import (
+	"fmt"
+	"runtime/debug"
+	"syscall/js"
+)
 
 // Event represents a DOM event.
 type Event struct {
@@ -165,6 +169,23 @@ func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) {
 	var cb jsFunc
 	cb = funcOf(func(_ jsObject, args []jsObject) interface{} {
 		cb.Release()
+
+		// Add panic recovery for render callbacks
+		defer func() {
+			if r := recover(); r != nil {
+				js.Global().Get("console").Call("log", "MASC caught panic in render callback:", r)
+
+				if currentProgram != nil {
+					js.Global().Get("console").Call("log", "Calling panic handler")
+					currentProgram.panicHandler(r)
+				} else {
+					// Fallback if no current program (shouldn't happen)
+					js.Global().Get("console").Call("log", "No current program - using fallback")
+					fmt.Printf("Caught panic in render callback:\n\n%s\n\n", r)
+					debug.PrintStack()
+				}
+			}
+		}()
 
 		callback(args[0].Float(), send)
 		return undefined()
