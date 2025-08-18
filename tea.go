@@ -21,6 +21,9 @@ import (
 var ErrProgramKilled = errors.New("program was killed")
 
 // currentProgram holds a reference to the currently running program for panic handling
+// Used in dom_js.go for JavaScript builds
+//
+//nolint:unused
 var currentProgram *Program
 
 // Yield pauses execution to allow the UI to update and remain responsive.
