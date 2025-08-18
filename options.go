@@ -96,3 +96,25 @@ func WithFilter(filter func(Model, Msg) Msg) ProgramOption {
 		p.filter = filter
 	}
 }
+
+// WithPanicHandler sets a custom panic handler that will be called when a
+// panic is caught by MASC. The panic handler function receives the panic value
+// and should handle displaying the panic error to the user in a way appropriate
+// for the application.
+//
+// If no panic handler is set, MASC will use its default behavior of printing
+// the panic to stdout with a stack trace.
+//
+// Example:
+//
+//	func myPanicHandler(panicValue interface{}) {
+//		// Custom panic handling logic here
+//		showErrorModal(panicValue)
+//	}
+//
+//	p := masc.NewProgram(model, masc.WithPanicHandler(myPanicHandler))
+func WithPanicHandler(handler func(interface{})) ProgramOption {
+	return func(p *Program) {
+		p.panicHandler = handler
+	}
+}
