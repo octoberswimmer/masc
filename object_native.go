@@ -93,8 +93,6 @@ func toJSObject(value interface{}) jsObject {
 		return nil
 	case jsObject:
 		return v
-	case SyscallJSValue:
-		return v.(jsObject)
 	case string:
 		return &stringObject{s: v}
 	case bool:
