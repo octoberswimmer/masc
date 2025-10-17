@@ -31,7 +31,13 @@ type Event struct {
 
 // Get retrieves a property from the event object.
 func (e *Event) Get(key string) SyscallJSValue {
-	return SyscallJSValue(e.Value.(jsObject).Get(key))
+	if e.Value == nil {
+		return nil
+	}
+	if obj, ok := e.Value.(jsObject); ok {
+		return SyscallJSValue(obj.Get(key))
+	}
+	return nil
 }
 
 // String returns the string representation of the event.
@@ -41,37 +47,60 @@ func (e *Event) String() string {
 
 // Bool returns the boolean representation of the event.
 func (e *Event) Bool() bool {
-	return e.Value.(jsObject).Bool()
+	if obj, ok := e.Value.(jsObject); ok {
+		return obj.Bool()
+	}
+	return false
 }
 
 // Int returns the integer representation of the event.
 func (e *Event) Int() int {
-	return e.Value.(jsObject).Int()
+	if obj, ok := e.Value.(jsObject); ok {
+		return obj.Int()
+	}
+	return 0
 }
 
 // Float returns the float representation of the event.
 func (e *Event) Float() float64 {
-	return e.Value.(jsObject).Float()
+	if obj, ok := e.Value.(jsObject); ok {
+		return obj.Float()
+	}
+	return 0
 }
 
 // IsUndefined returns whether the event is undefined.
 func (e *Event) IsUndefined() bool {
-	return e.Value.(jsObject).IsUndefined()
+	if obj, ok := e.Value.(jsObject); ok {
+		return obj.IsUndefined()
+	}
+	return e.Value == nil
 }
 
 // Equal checks if two events are equal.
 func (e *Event) Equal(other SyscallJSValue) bool {
-	return e.Value.(jsObject).Equal(other.(jsObject))
+	obj, ok := e.Value.(jsObject)
+	otherObj, okOther := other.(jsObject)
+	if ok && okOther {
+		return obj.Equal(otherObj)
+	}
+	return e.Value == other
 }
 
 // Set sets a property on the event object.
 func (e *Event) Set(key string, value interface{}) {
+	if e.Value == nil {
+		e.Value = NewObject(nil)
+	}
 	e.Value.(jsObject).Set(key, value)
 }
 
 // Call calls a method on the event object.
 func (e *Event) Call(method string, args ...interface{}) SyscallJSValue {
-	return SyscallJSValue(e.Value.(jsObject).Call(method, args...))
+	if obj, ok := e.Value.(jsObject); ok {
+		return SyscallJSValue(obj.Call(method, args...))
+	}
+	return nil
 }
 
 // gostPerformance implements jsObject for performance.now()
