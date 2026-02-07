@@ -1171,3 +1171,108 @@ func TestKeyedChild_DifferentType(t *testing.T) {
 
 	rerender()
 }
+
+// TestEventListenerRelease_TagChange tests that event listener wrappers are
+// released when a node's tag changes during reconciliation.
+func TestEventListenerRelease_TagChange(t *testing.T) {
+	ts := testSuite(t)
+	defer ts.done()
+
+	// Create initial element with event listeners
+	e0 := &EventListener{Name: "click"}
+	e1 := &EventListener{Name: "keydown"}
+	prev := Tag("div", Markup(e0, e1))
+	prev.reconcile(nil, send)
+
+	// Verify wrappers were created
+	if e0.wrapper == nil {
+		t.Fatal("e0.wrapper == nil after initial reconcile")
+	}
+	if e1.wrapper == nil {
+		t.Fatal("e1.wrapper == nil after initial reconcile")
+	}
+
+	// Get the wrapper implementations to check released state
+	w0 := e0.wrapper.(*jsFuncImpl)
+	w1 := e1.wrapper.(*jsFuncImpl)
+
+	if w0.released {
+		t.Fatal("w0 should not be released before tag change")
+	}
+	if w1.released {
+		t.Fatal("w1 should not be released before tag change")
+	}
+
+	// Reconcile with a different tag - this should release old event listeners
+	next := Tag("span") // Different tag, no event listeners
+	next.reconcile(prev, send)
+
+	// Verify old wrappers were released
+	if !w0.released {
+		t.Fatal("w0 should be released after tag change")
+	}
+	if !w1.released {
+		t.Fatal("w1 should be released after tag change")
+	}
+}
+
+// TestEventListenerRelease_Unmount tests that event listener wrappers are
+// released when a node is unmounted.
+func TestEventListenerRelease_Unmount(t *testing.T) {
+	ts := testSuite(t)
+	defer ts.done()
+
+	// Create element with event listeners
+	e0 := &EventListener{Name: "click"}
+	h := Tag("div", Markup(e0))
+	h.reconcile(nil, send)
+
+	// Verify wrapper was created
+	if e0.wrapper == nil {
+		t.Fatal("e0.wrapper == nil after reconcile")
+	}
+
+	w0 := e0.wrapper.(*jsFuncImpl)
+	if w0.released {
+		t.Fatal("w0 should not be released before unmount")
+	}
+
+	// Unmount the element
+	unmount(h)
+
+	// Verify wrapper was released
+	if !w0.released {
+		t.Fatal("w0 should be released after unmount")
+	}
+}
+
+// TestEventListenerRelease_NestedUnmount tests that event listener wrappers
+// are released for nested elements when parent is unmounted.
+func TestEventListenerRelease_NestedUnmount(t *testing.T) {
+	ts := testSuite(t)
+	defer ts.done()
+
+	// Create nested elements with event listeners
+	childListener := &EventListener{Name: "click"}
+	child := Tag("button", Markup(childListener))
+	parent := Tag("div", child)
+	parent.reconcile(nil, send)
+
+	// Verify wrapper was created
+	if childListener.wrapper == nil {
+		t.Fatal("childListener.wrapper == nil after reconcile")
+	}
+
+	w := childListener.wrapper.(*jsFuncImpl)
+	if w.released {
+		t.Fatal("wrapper should not be released before unmount")
+	}
+
+	// Unmount the parent (should also release child's listeners)
+	unmount(parent)
+
+	// Verify child's wrapper was released
+	if !w.released {
+		t.Fatal("child wrapper should be released after parent unmount")
+	}
+}

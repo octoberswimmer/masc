@@ -251,6 +251,8 @@ func (h *HTML) reconcile(prev *HTML, send func(Msg)) []Mounter {
 		if prev == nil {
 			prev = &HTML{}
 		}
+		// Release event listeners from the old node being replaced
+		prev.releaseEventListeners()
 		h.createNode()
 	}
 
@@ -262,6 +264,17 @@ func (h *HTML) reconcile(prev *HTML, send func(Msg)) []Mounter {
 	}
 
 	return h.reconcileChildren(prev, send)
+}
+
+// releaseEventListeners releases all js.Func wrappers for event listeners.
+// This must be called when an element is being removed or replaced to prevent
+// memory leaks in WebAssembly.
+func (h *HTML) releaseEventListeners() {
+	for _, l := range h.eventListeners {
+		if l.wrapper != nil {
+			l.wrapper.Release()
+		}
+	}
 }
 
 // removeProperties removes properties/attributes/etc that are no longer
@@ -1115,6 +1128,8 @@ func unmount(e ComponentOrHTML) {
 		for _, child := range h.children {
 			unmount(child)
 		}
+		// Release event listener wrappers to prevent memory leaks
+		h.releaseEventListeners()
 	}
 
 	if u, ok := e.(Unmounter); ok {

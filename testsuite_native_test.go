@@ -10,11 +10,12 @@ import (
 )
 
 type jsFuncImpl struct {
-	goFunc func(this jsObject, args []jsObject) interface{}
+	goFunc   func(this jsObject, args []jsObject) interface{}
+	released bool
 }
 
 func (j *jsFuncImpl) String() string { return "func" }
-func (j *jsFuncImpl) Release()       {}
+func (j *jsFuncImpl) Release()       { j.released = true }
 
 func commandOutput(command string, args ...string) (string, error) {
 	cmd := exec.Command(command, args...)
