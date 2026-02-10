@@ -6,7 +6,16 @@ package masc
 import (
 	"fmt"
 	"runtime/debug"
+	"sync/atomic"
 	"syscall/js"
+)
+
+// JsFuncStats tracks js.Func allocation and release for debugging memory leaks
+var (
+	JsFuncCreated        int64
+	JsFuncReleased       int64
+	JsFuncEventListeners int64 // Created in reconcileProperties for event listeners
+	JsFuncRAF            int64 // Created in requestAnimationFrame
 )
 
 // Event represents a DOM event.
@@ -63,6 +72,7 @@ func undefined() wrappedObject {
 }
 
 func funcOf(fn func(this jsObject, args []jsObject) interface{}) jsFunc {
+	atomic.AddInt64(&JsFuncCreated, 1)
 	return &jsFuncImpl{
 		f: js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 			wrappedArgs := make([]jsObject, len(args))
@@ -87,7 +97,11 @@ func (j *jsFuncImpl) String() string {
 	return "func"
 }
 
-func (j *jsFuncImpl) Release() { j.f.Release() }
+func (j *jsFuncImpl) Release() {
+	atomic.AddInt64(&JsFuncReleased, 1)
+	j.f.Release()
+	j.goFunc = nil // Help GC by breaking closure reference chain
+}
 
 func valueOf(v interface{}) jsObject {
 	return wrapObject(js.ValueOf(v))
@@ -167,6 +181,7 @@ func (w wrappedObject) Float() float64 {
 // requestAnimationFrame calls the native JS function of the same name.
 func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) {
 	var cb jsFunc
+	atomic.AddInt64(&JsFuncRAF, 1)
 	cb = funcOf(func(_ jsObject, args []jsObject) interface{} {
 		cb.Release()
 
@@ -204,6 +219,7 @@ func (h *HTML) reconcileProperties(prev *HTML) {
 	// Wrap event listeners
 	for _, l := range h.eventListeners {
 		l := l
+		atomic.AddInt64(&JsFuncEventListeners, 1)
 		l.wrapper = funcOf(func(_ jsObject, args []jsObject) interface{} {
 			jsEvent := args[0]
 			if l.callPreventDefault {
