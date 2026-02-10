@@ -2,6 +2,7 @@ package masc
 
 import (
 	"reflect"
+	"sync/atomic"
 )
 
 // defaultFrameBudget is the target frame budget in milliseconds (1000ms / 60fps).
@@ -9,6 +10,13 @@ const defaultFrameBudget = 1000.0 / 60.0
 
 // batch renderer singleton.
 var batch = &batchRenderer{idx: make(map[Component]int)}
+
+// HTMLStats tracks HTML element creation for debugging memory leaks
+var (
+	HTMLCreated    int64 // Number of HTML elements created via Tag/Text
+	HTMLReconciled int64 // Number of HTML elements reconciled (reused nodes)
+	HTMLReplaced   int64 // Number of HTML elements replaced (new nodes)
+)
 
 // Core implements the Context method of the Component interface, and is the
 // core/central struct which all Component implementations should embed.
@@ -241,13 +249,16 @@ func (h *HTML) reconcile(prev *HTML, send func(Msg)) []Mounter {
 	switch {
 	case prev != nil && h.tag == "" && prev.tag == "":
 		// Compatible text node
+		atomic.AddInt64(&HTMLReconciled, 1)
 		h.reconcileText(prev)
 		return nil
 	case prev != nil && h.tag != "" && prev.tag != "" && h.tag == prev.tag && h.namespace == prev.namespace:
 		// Compatible element node
+		atomic.AddInt64(&HTMLReconciled, 1)
 		h.node = prev.node
 	default:
 		// Incompatible node, start fresh
+		atomic.AddInt64(&HTMLReplaced, 1)
 		if prev == nil {
 			prev = &HTML{}
 		}
@@ -273,6 +284,7 @@ func (h *HTML) releaseEventListeners() {
 	for _, l := range h.eventListeners {
 		if l.wrapper != nil {
 			l.wrapper.Release()
+			l.wrapper = nil // Help GC by breaking reference chain
 		}
 	}
 }
@@ -322,6 +334,7 @@ func (h *HTML) removeProperties(prev *HTML) {
 	for _, l := range prev.eventListeners {
 		h.node.Call("removeEventListener", l.Name, l.wrapper)
 		l.wrapper.Release()
+		l.wrapper = nil // Help GC by breaking reference chain
 	}
 }
 
@@ -743,6 +756,7 @@ func (l KeyedList) remove(parent *HTML) {
 // function is not used directly but rather the elem subpackage (which is type
 // safe) is used instead.
 func Tag(tag string, m ...MarkupOrChild) *HTML {
+	atomic.AddInt64(&HTMLCreated, 1)
 	h := &HTML{
 		tag: tag,
 	}
@@ -756,6 +770,7 @@ func Tag(tag string, m ...MarkupOrChild) *HTML {
 // HTML represents a TextNode, the text does not have to be escaped (arbitrary
 // user input fed into this function will always be safely rendered).
 func Text(text string, m ...MarkupOrChild) *HTML {
+	atomic.AddInt64(&HTMLCreated, 1)
 	h := &HTML{
 		text: text,
 	}
@@ -911,6 +926,10 @@ func copyComponent(c Component) Component {
 		if cpy == c {
 			panic("masc: Component.Copy illegally returned an identical *MyComponent pointer")
 		}
+		// Clear prevRender references in the copy to prevent memory leaks.
+		// The copy is only used for SkipRender comparisons, not for DOM reconciliation.
+		cpy.Context().prevRender = nil
+		cpy.Context().prevRenderComponent = nil
 		return cpy
 	}
 
@@ -922,7 +941,12 @@ func copyComponent(c Component) Component {
 	}
 	cpy := reflect.New(v.Elem().Type())
 	cpy.Elem().Set(v.Elem())
-	return cpy.Interface().(Component)
+	cpyComponent := cpy.Interface().(Component)
+	// Clear prevRender references in the copy to prevent memory leaks.
+	// The copy is only used for SkipRender comparisons, not for DOM reconciliation.
+	cpyComponent.Context().prevRender = nil
+	cpyComponent.Context().prevRenderComponent = nil
+	return cpyComponent
 }
 
 // copyProps copies all struct fields from src to dst that are tagged with

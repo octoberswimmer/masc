@@ -1276,3 +1276,130 @@ func TestEventListenerRelease_NestedUnmount(t *testing.T) {
 		t.Fatal("child wrapper should be released after parent unmount")
 	}
 }
+
+// TestCopyComponent_ClearsPrevRender tests that copyComponent clears
+// prevRender and prevRenderComponent on the copy to prevent memory leaks.
+func TestCopyComponent_ClearsPrevRender(t *testing.T) {
+	comp := &componentFunc{
+		id: "original",
+		render: func() ComponentOrHTML {
+			return Tag("div")
+		},
+	}
+
+	// Set up prevRender and prevRenderComponent
+	prevHTML := Tag("span")
+	prevComp := &componentFunc{id: "prev"}
+	comp.Context().prevRender = prevHTML
+	comp.Context().prevRenderComponent = prevComp
+
+	// Copy the component
+	cpy := copyComponent(comp)
+
+	// Verify the copy has cleared prevRender fields
+	if cpy.Context().prevRender != nil {
+		t.Fatal("copyComponent should clear prevRender on the copy")
+	}
+	if cpy.Context().prevRenderComponent != nil {
+		t.Fatal("copyComponent should clear prevRenderComponent on the copy")
+	}
+
+	// Verify original is unchanged
+	if comp.Context().prevRender != prevHTML {
+		t.Fatal("copyComponent should not modify original's prevRender")
+	}
+	if comp.Context().prevRenderComponent != prevComp {
+		t.Fatal("copyComponent should not modify original's prevRenderComponent")
+	}
+}
+
+// TestCopyComponent_WithCopier_ClearsPrevRender tests that copyComponent
+// clears prevRender fields even when the component implements Copier.
+func TestCopyComponent_WithCopier_ClearsPrevRender(t *testing.T) {
+	comp := &componentWithCopier{
+		id: "original",
+	}
+
+	// Set up prevRender and prevRenderComponent
+	prevHTML := Tag("span")
+	prevComp := &componentFunc{id: "prev"}
+	comp.Context().prevRender = prevHTML
+	comp.Context().prevRenderComponent = prevComp
+
+	// Copy the component
+	cpy := copyComponent(comp)
+
+	// Verify the copy has cleared prevRender fields
+	if cpy.Context().prevRender != nil {
+		t.Fatal("copyComponent should clear prevRender on the copy")
+	}
+	if cpy.Context().prevRenderComponent != nil {
+		t.Fatal("copyComponent should clear prevRenderComponent on the copy")
+	}
+}
+
+// componentWithCopier is a test component that implements the Copier interface.
+type componentWithCopier struct {
+	Core
+	id string
+}
+
+func (c *componentWithCopier) Render(send func(Msg)) ComponentOrHTML {
+	return Tag("div")
+}
+
+func (c *componentWithCopier) Copy() Component {
+	cpy := *c
+	return &cpy
+}
+
+// TestEventListenerWrapper_NilAfterRelease tests that the wrapper field
+// is set to nil after release to help GC break reference chains.
+func TestEventListenerWrapper_NilAfterRelease(t *testing.T) {
+	ts := testSuite(t)
+	defer ts.done()
+
+	// Create element with event listener
+	e0 := &EventListener{Name: "click"}
+	prev := Tag("div", Markup(e0))
+	prev.reconcile(nil, send)
+
+	// Verify wrapper was created
+	if e0.wrapper == nil {
+		t.Fatal("e0.wrapper == nil after reconcile")
+	}
+
+	// Reconcile with element that has no listeners (triggers removeProperties)
+	next := Tag("div") // Same tag, no event listeners
+	next.reconcile(prev, send)
+
+	// Verify wrapper was released and nilled
+	if e0.wrapper != nil {
+		t.Fatal("e0.wrapper should be nil after release in removeProperties")
+	}
+}
+
+// TestReleaseEventListeners_NilsWrapper tests that releaseEventListeners
+// sets wrapper to nil after release.
+func TestReleaseEventListeners_NilsWrapper(t *testing.T) {
+	ts := testSuite(t)
+	defer ts.done()
+
+	// Create element with event listener
+	e0 := &EventListener{Name: "click"}
+	h := Tag("div", Markup(e0))
+	h.reconcile(nil, send)
+
+	// Verify wrapper was created
+	if e0.wrapper == nil {
+		t.Fatal("e0.wrapper == nil after reconcile")
+	}
+
+	// Directly call releaseEventListeners
+	h.releaseEventListeners()
+
+	// Verify wrapper was nilled
+	if e0.wrapper != nil {
+		t.Fatal("e0.wrapper should be nil after releaseEventListeners")
+	}
+}
