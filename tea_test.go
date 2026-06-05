@@ -11,9 +11,8 @@ type incrementMsg struct{}
 
 type testModel struct {
 	Core
-	executed  atomic.Value
-	counter   atomic.Value
-	testSuite *testSuiteT
+	executed atomic.Value
+	counter  atomic.Value
 }
 
 func (m testModel) Init() Cmd {
@@ -36,17 +35,6 @@ func (m *testModel) Update(msg Msg) (Model, Cmd) {
 
 func (m *testModel) Render(send func(Msg)) ComponentOrHTML {
 	m.executed.Store(true)
-	go func() {
-		time.Sleep(20 * time.Millisecond)
-		for {
-			if len(m.testSuite.callbacks) == 0 {
-				time.Sleep(200 * time.Millisecond)
-			} else {
-				m.testSuite.invokeCallbackRequestAnimationFrame(0)
-				return
-			}
-		}
-	}()
 	return Tag("body")
 }
 
@@ -60,7 +48,6 @@ func TestTeaQuit(t *testing.T) {
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
 
 	m := &testModel{}
-	m.testSuite = ts
 	p := NewProgram(m)
 	go func() {
 		for {
@@ -93,7 +80,6 @@ func testTeaWithFilter(t *testing.T, preventCount uint32) {
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
 
 	m := &testModel{}
-	m.testSuite = ts
 	shutdowns := uint32(0)
 	p := NewProgram(m,
 		WithFilter(func(_ Model, msg Msg) Msg {
@@ -132,7 +118,6 @@ func TestTeaKill(t *testing.T) {
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
 
 	m := &testModel{}
-	m.testSuite = ts
 	p := NewProgram(m)
 	go func() {
 		for {
@@ -161,7 +146,6 @@ func TestTeaContext(t *testing.T) {
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
 
 	m := &testModel{}
-	m.testSuite = ts
 	p := NewProgram(m, WithContext(ctx))
 	go func() {
 		for {
@@ -192,7 +176,6 @@ func TestTeaBatchMsg(t *testing.T) {
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
 
 	m := &testModel{}
-	m.testSuite = ts
 	p := NewProgram(m)
 	go func() {
 		p.Send(BatchMsg{inc, inc})
@@ -230,7 +213,6 @@ func TestTeaSequenceMsg(t *testing.T) {
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
 
 	m := &testModel{}
-	m.testSuite = ts
 	p := NewProgram(m)
 	go p.Send(sequenceMsg{inc, inc, Quit})
 
@@ -260,7 +242,6 @@ func TestTeaSequenceMsgWithBatchMsg(t *testing.T) {
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
 
 	m := &testModel{}
-	m.testSuite = ts
 	p := NewProgram(m)
 	go p.Send(sequenceMsg{batch, inc, Quit})
 
@@ -283,7 +264,6 @@ func TestTeaSend(t *testing.T) {
 	ts.truthies.mock(`global.Get("document").Call("querySelector", "body")`, true)
 
 	m := &testModel{}
-	m.testSuite = ts
 	p := NewProgram(m)
 
 	// sending before the program is started is a blocking operation

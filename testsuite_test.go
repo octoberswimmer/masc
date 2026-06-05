@@ -63,6 +63,9 @@ func testSuite(t *testing.T) *testSuiteT {
 		ts:   ts,
 		name: "global",
 	}
+	// Reset the batch renderer singleton so components queued by a previous
+	// test do not leak into this one.
+	batch = &batchRenderer{idx: make(map[Component]int)}
 	return ts
 }
 
@@ -81,11 +84,15 @@ type valueMocker struct {
 // mock adds an entry to mock the specified invocation to return the given
 // value.
 func (v *valueMocker) mock(invocation string, value interface{}) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	v.values = append(v.values, mockedValue{invocation, value})
 }
 
 // get gets the mocked value for the specified invocation.
 func (v *valueMocker) get(invocation string) interface{} {
+	mutex.Lock()
+	defer mutex.Unlock()
 	for i, value := range v.values {
 		if value.invocation == invocation {
 			// Found the right invocation.
@@ -94,6 +101,13 @@ func (v *valueMocker) get(invocation string) interface{} {
 		}
 	}
 	panic(fmt.Sprintf("expected mocked value for invocation: %s", invocation))
+}
+
+// unused returns a copy of the remaining mocked values.
+func (v *valueMocker) unused() []mockedValue {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return append([]mockedValue(nil), v.values...)
 }
 
 type testSuiteT struct {
@@ -144,7 +158,10 @@ func (ts *testSuiteT) multiSortedDone(linesToSort ...[2]int) {
 	want := strings.TrimSpace(string(wantBytes))
 
 	// Ensure output is properly sorted.
-	split := strings.Split(strings.TrimSpace(ts.got), "\n")
+	mutex.Lock()
+	recorded := ts.got
+	mutex.Unlock()
+	split := strings.Split(strings.TrimSpace(recorded), "\n")
 	for _, pair := range linesToSort {
 		sortStartLine := pair[0] - 1 // to match editor line numbers
 		if sortStartLine < 0 {
@@ -168,16 +185,16 @@ func (ts *testSuiteT) multiSortedDone(linesToSort ...[2]int) {
 		// Successful test.
 
 		// Ensure there are no unused mocked values.
-		for _, v := range ts.strings.values {
+		for _, v := range ts.strings.unused() {
 			ts.t.Errorf("unused mocked string value %q %v", v.invocation, v.value)
 		}
-		for _, v := range ts.bools.values {
+		for _, v := range ts.bools.unused() {
 			ts.t.Errorf("unused mocked bool value %q %v", v.invocation, v.value)
 		}
-		for _, v := range ts.floats.values {
+		for _, v := range ts.floats.unused() {
 			ts.t.Errorf("unused mocked float value %q %v", v.invocation, v.value)
 		}
-		for _, v := range ts.ints.values {
+		for _, v := range ts.ints.unused() {
 			ts.t.Errorf("unused mocked int value %q %v", v.invocation, v.value)
 		}
 		return
@@ -205,6 +222,8 @@ func (ts *testSuiteT) multiSortedDone(linesToSort ...[2]int) {
 // record records the invocation to the test suite and returns the string
 // unmodified.
 func (ts *testSuiteT) record(invocation string) string {
+	mutex.Lock()
+	defer mutex.Unlock()
 	ts.got += "\n" + invocation
 	return invocation
 }
@@ -221,8 +240,15 @@ func (ts *testSuiteT) addCallbacks(invocation string, args ...interface{}) {
 	}
 }
 
+// callback returns the registered callback for the given invocation.
+func (ts *testSuiteT) callback(invocation string) func(this jsObject, args []jsObject) interface{} {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return ts.callbacks[invocation].(func(this jsObject, args []jsObject) interface{})
+}
+
 func (ts *testSuiteT) invokeCallbackRequestAnimationFrame(v float64) {
-	cb := ts.callbacks[`global.Call("requestAnimationFrame", func)`].(func(this jsObject, args []jsObject) interface{})
+	cb := ts.callback(`global.Call("requestAnimationFrame", func)`)
 	cb(undefined(), []jsObject{valueOf(v)})
 }
 
@@ -230,12 +256,12 @@ func (ts *testSuiteT) invokeCallbackRequestAnimationFrame(v float64) {
 // raceAnimationFrame. Like the browser, it passes no arguments to the
 // callback.
 func (ts *testSuiteT) invokeCallbackSetTimeout() {
-	cb := ts.callbacks[fmt.Sprintf(`global.Call("setTimeout", func, %d)`, frameFallbackDelay)].(func(this jsObject, args []jsObject) interface{})
+	cb := ts.callback(fmt.Sprintf(`global.Call("setTimeout", func, %d)`, frameFallbackDelay))
 	cb(undefined(), nil)
 }
 
 func (ts *testSuiteT) invokeCallbackDOMContentLoaded() {
-	cb := ts.callbacks[`global.Get("document").Call("addEventListener", "DOMContentLoaded", func)`].(func(this jsObject, args []jsObject) interface{})
+	cb := ts.callback(`global.Get("document").Call("addEventListener", "DOMContentLoaded", func)`)
 	cb(undefined(), nil)
 }
 
