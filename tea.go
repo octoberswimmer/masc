@@ -272,7 +272,7 @@ func (p *Program) eventLoop(model Model, cmds chan Cmd) (Model, error) {
 
 			// Schedule command to run after next frame render for better INP
 			if cmd != nil {
-				requestAnimationFrame(func(float64, func(Msg)) {
+				scheduleFrame(func(float64, func(Msg)) {
 					cmds <- cmd // run command after UI updates
 				}, p.Send)
 			}

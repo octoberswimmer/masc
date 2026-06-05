@@ -1,0 +1,6 @@
+global.Call("requestAnimationFrame", func)
+global.Call("setTimeout", func, 250)
+global.Call("cancelAnimationFrame", jsObject(global.Call("requestAnimationFrame", func)))
+global.Call("clearTimeout", jsObject(global.Call("setTimeout", func, 250)))
+global.Get("performance")
+global.Get("performance").Call("now", )

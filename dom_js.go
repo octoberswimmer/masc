@@ -15,7 +15,7 @@ var (
 	JsFuncCreated        int64
 	JsFuncReleased       int64
 	JsFuncEventListeners int64 // Created in reconcileProperties for event listeners
-	JsFuncRAF            int64 // Created in requestAnimationFrame
+	JsFuncRAF            int64 // Created in scheduleFrame
 )
 
 // Event represents a DOM event.
@@ -178,13 +178,15 @@ func (w wrappedObject) Float() float64 {
 	return w.j.Float()
 }
 
-// requestAnimationFrame calls the native JS function of the same name.
-func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) {
-	var cb jsFunc
+// scheduleFrame schedules callback to be invoked on the next animation
+// frame, racing requestAnimationFrame against a setTimeout fallback (see
+// raceAnimationFrame) so that the program keeps updating while the document
+// is hidden — browsers pause animation frame callbacks for hidden documents,
+// which would otherwise stall rendering and command dispatch until the
+// window became visible again.
+func scheduleFrame(callback func(float64, func(Msg)), send func(Msg)) {
 	atomic.AddInt64(&JsFuncRAF, 1)
-	cb = funcOf(func(_ jsObject, args []jsObject) interface{} {
-		cb.Release()
-
+	raceAnimationFrame(func(timestamp float64) {
 		// Add panic recovery for render callbacks
 		defer func() {
 			if r := recover(); r != nil {
@@ -202,10 +204,8 @@ func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) {
 			}
 		}()
 
-		callback(args[0].Float(), send)
-		return undefined()
+		callback(timestamp, send)
 	})
-	global().Call("requestAnimationFrame", cb)
 }
 
 // reconcileProperties updates properties/attributes/etc to match the current

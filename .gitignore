@@ -22,3 +22,4 @@ tutorials/commands/commands
 .idea
 coverage.txt
 testdata/*.got.txt
+example/commandsequence/commandsequence

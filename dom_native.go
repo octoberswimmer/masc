@@ -143,6 +143,14 @@ func (f *floatObject) Bool() bool        { return f.f != 0 }
 func (f *floatObject) Int() int          { return int(f.f) }
 func (f *floatObject) Float() float64    { return f.f }
 
+// scheduleFrame schedules the callback to be invoked on the next animation
+// frame. The native environment has no hidden-window concept, so unlike the
+// js implementation no setTimeout fallback is needed and this simply
+// delegates to requestAnimationFrame.
+func scheduleFrame(callback func(float64, func(Msg)), send func(Msg)) {
+	requestAnimationFrame(callback, send)
+}
+
 // requestAnimationFrame schedules the callback immediately in the native environment.
 // This simulates the next animation frame for testing purposes.
 func requestAnimationFrame(callback func(float64, func(Msg)), send func(Msg)) {

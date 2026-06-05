@@ -14,6 +14,11 @@ Masc components look just like Vecty components, except the Render function
 takes a `func(Msg)` parameter.  This function, called `send` by convention, is
 used to send messages to the running program to update its state.
 
+Rendering and command dispatch are scheduled on animation frames, with a
+timer fallback so programs keep updating while the window is hidden
+(browsers pause `requestAnimationFrame` callbacks for hidden documents,
+and throttle background timers to roughly one per second).
+
 Stateless components implement the Component interface, i.e. have a `Render(func(Msg) ComponentOrHTML` function.
 
 Models are Components that also implement the Model interface, i.e. have `Init() Cmd` and `Update(Msg) (Model, Cmd)` functions.

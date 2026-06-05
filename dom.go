@@ -8,6 +8,14 @@ import (
 // defaultFrameBudget is the target frame budget in milliseconds (1000ms / 60fps).
 const defaultFrameBudget = 1000.0 / 60.0
 
+// frameFallbackDelay is the delay in milliseconds for the setTimeout fallback
+// armed alongside each requestAnimationFrame call by raceAnimationFrame. It
+// is long enough that the fallback never wins while the document is visible
+// (frames arrive every ~16ms), and short enough to keep the program
+// responsive while hidden, where browsers clamp timers to at least one
+// second anyway.
+const frameFallbackDelay = 250
+
 // batch renderer singleton.
 var batch = &batchRenderer{idx: make(map[Component]int)}
 
@@ -804,7 +812,7 @@ func rerender(c Component, send func(Msg)) {
 }
 
 // batchRenderer handles component re-renders by queueing and deduplicating
-// them, to be rendered on the next animation frame (via requestAnimationFrame).
+// them, to be rendered on the next animation frame (via scheduleFrame).
 type batchRenderer struct {
 	// batch contains the list of pending components to render.
 	batch []Component
@@ -833,7 +841,7 @@ func (b *batchRenderer) add(c Component, send func(Msg)) {
 	// the next frame.
 	if !b.scheduled {
 		b.scheduled = true
-		requestAnimationFrame(b.render, send)
+		scheduleFrame(b.render, send)
 	}
 }
 
@@ -888,7 +896,44 @@ func (b *batchRenderer) render(startTime float64, send func(Msg)) {
 	}
 
 	// Schedule next frame.
-	requestAnimationFrame(b.render, send)
+	scheduleFrame(b.render, send)
+}
+
+// raceAnimationFrame schedules run to be invoked on the next animation
+// frame, racing requestAnimationFrame against a setTimeout fallback.
+// Browsers pause animation frame callbacks while the document is hidden,
+// which would stall rendering and command dispatch until the window became
+// visible again; the fallback keeps the program loop alive in hidden
+// windows. Whichever timer fires first wins and cancels the other. run
+// receives the frame timestamp, taken from performance.now() when the
+// fallback wins (the setTimeout callback receives no timestamp argument).
+func raceAnimationFrame(run func(timestamp float64)) {
+	var (
+		cb                 jsFunc
+		frameID, timeoutID jsObject
+		fired              bool
+	)
+	cb = funcOf(func(_ jsObject, args []jsObject) interface{} {
+		if fired {
+			return undefined()
+		}
+		fired = true
+		// Cancel whichever scheduler lost the race.
+		global().Call("cancelAnimationFrame", frameID)
+		global().Call("clearTimeout", timeoutID)
+		cb.Release()
+
+		var timestamp float64
+		if len(args) > 0 {
+			timestamp = args[0].Float()
+		} else {
+			timestamp = global().Get("performance").Call("now").Float()
+		}
+		run(timestamp)
+		return undefined()
+	})
+	frameID = global().Call("requestAnimationFrame", cb)
+	timeoutID = global().Call("setTimeout", cb, frameFallbackDelay)
 }
 
 // extractHTML returns the *HTML from a ComponentOrHTML.
@@ -1241,7 +1286,7 @@ func renderIntoNode(methodName string, node jsObject, c Component, send func(Msg
 			if m, ok := c.(Mounter); ok {
 				mount(m)
 			}
-			requestAnimationFrame(batch.render, send)
+			scheduleFrame(batch.render, send)
 			return undefined()
 		})
 		doc.Call("addEventListener", "DOMContentLoaded", cb)
@@ -1252,7 +1297,7 @@ func renderIntoNode(methodName string, node jsObject, c Component, send func(Msg
 	if m, ok := c.(Mounter); ok {
 		mount(m)
 	}
-	requestAnimationFrame(batch.render, send)
+	scheduleFrame(batch.render, send)
 	return nil
 }
 

@@ -226,6 +226,14 @@ func (ts *testSuiteT) invokeCallbackRequestAnimationFrame(v float64) {
 	cb(undefined(), []jsObject{valueOf(v)})
 }
 
+// invokeCallbackSetTimeout invokes the setTimeout fallback callback armed by
+// raceAnimationFrame. Like the browser, it passes no arguments to the
+// callback.
+func (ts *testSuiteT) invokeCallbackSetTimeout() {
+	cb := ts.callbacks[fmt.Sprintf(`global.Call("setTimeout", func, %d)`, frameFallbackDelay)].(func(this jsObject, args []jsObject) interface{})
+	cb(undefined(), nil)
+}
+
 func (ts *testSuiteT) invokeCallbackDOMContentLoaded() {
 	cb := ts.callbacks[`global.Get("document").Call("addEventListener", "DOMContentLoaded", func)`].(func(this jsObject, args []jsObject) interface{})
 	cb(undefined(), nil)
