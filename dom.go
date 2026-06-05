@@ -14,6 +14,8 @@ const defaultFrameBudget = 1000.0 / 60.0
 // (frames arrive every ~16ms), and short enough to keep the program
 // responsive while hidden, where browsers clamp timers to at least one
 // second anyway.
+//
+//nolint:unused // used by scheduleFrame on js builds and by native tests
 const frameFallbackDelay = 250
 
 // batch renderer singleton.
@@ -907,6 +909,8 @@ func (b *batchRenderer) render(startTime float64, send func(Msg)) {
 // windows. Whichever timer fires first wins and cancels the other. run
 // receives the frame timestamp, taken from performance.now() when the
 // fallback wins (the setTimeout callback receives no timestamp argument).
+//
+//nolint:unused // used by scheduleFrame on js builds and by native tests
 func raceAnimationFrame(run func(timestamp float64)) {
 	var (
 		cb                 jsFunc
@@ -981,7 +985,7 @@ func copyComponent(c Component) Component {
 	// Component does not implement the Copier interface, so perform a shallow
 	// copy.
 	v := reflect.ValueOf(c)
-	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
 		panic("masc: Component must be pointer to struct, found " + reflect.TypeOf(c).String())
 	}
 	cpy := reflect.New(v.Elem().Type())
@@ -1007,7 +1011,7 @@ func copyProps(src, dst Component) {
 	if s.Type() != d.Type() {
 		panic("masc: internal error (attempted to copy properties of incompatible structs)")
 	}
-	if s.Kind() != reflect.Ptr || d.Kind() != reflect.Ptr {
+	if s.Kind() != reflect.Pointer || d.Kind() != reflect.Pointer {
 		panic("masc: internal error (attempted to copy properties of non-pointer)")
 	}
 	for i := 0; i < s.Elem().NumField(); i++ {
