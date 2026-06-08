@@ -3,7 +3,7 @@ module github.com/octoberswimmer/masc
 go 1.25.0
 
 require (
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/gost-dom/browser v0.5.7
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/sync v0.20.0
