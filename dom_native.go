@@ -293,6 +293,20 @@ func (g *gostWrapper) Set(key string, value interface{}) {
 			_ = el.SetInnerHTML(value.(string))
 		}
 	case "nodeValue":
+		// SetTextContent on a gost-dom text node replaces the node's
+		// children, which a text node has none of, and leaves its data as it
+		// was. gost-dom offers no setter for the data, so the text node is
+		// replaced by a new one and this wrapper, which masc keeps as the
+		// node's handle, is pointed at the replacement.
+		if g.n.NodeType() == dom.NodeTypeText {
+			fresh := g.n.OwnerDocument().CreateText(value.(string))
+			if parent := g.n.Parent(); parent != nil {
+				_, _ = parent.InsertBefore(fresh, g.n)
+				_, _ = parent.RemoveChild(g.n)
+			}
+			g.n = fresh
+			return
+		}
 		g.n.SetTextContent(value.(string))
 	default:
 		if el, ok := g.n.(dom.Element); ok {
@@ -316,6 +330,21 @@ func (g *gostWrapper) Get(key string) jsObject {
 			return nil
 		}
 		return &gostWrapper{n: p}
+	// reconcileChildren reads firstChild and nextSibling to find the DOM node
+	// a new child is inserted before; without them every new child that is
+	// not last among its siblings was dropped.
+	case "firstChild":
+		c := g.n.FirstChild()
+		if c == nil {
+			return nil
+		}
+		return &gostWrapper{n: c}
+	case "nextSibling":
+		s := g.n.NextSibling()
+		if s == nil {
+			return nil
+		}
+		return &gostWrapper{n: s}
 	case "readyState":
 		return &stringObject{s: "complete"}
 	case "value":
